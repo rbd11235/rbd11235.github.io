@@ -22,17 +22,33 @@ Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
+var player = {
+	id: "",
+	x: 3,
+	y: 4
+}
+
+var blocks = [];
+
+
 PS.init = function( system, options ) {
+	PS.gridSize( 8, 8 ); // or whatever size you want
 	// Change this string to your team name
 	// Use only ALPHABETIC characters
 	// No numbers, spaces or punctuation!
+	player.id = PS.spriteSolid( 1, 1 );
 
-	const TEAM = "teamname";
+	// Set color to red
+
+	PS.spriteSolidColor( player.id, PS.COLOR_RED );
+
+	updatePosition();
+	const TEAM = "TeamSwift";
 
 	// Begin with essential setup
 	// Establish initial grid size
 
-	PS.gridSize( 8, 8 ); // or whatever size you want
+
 
 	// Install additional initialization code
 	// here as needed
@@ -42,13 +58,13 @@ PS.init = function( system, options ) {
 	// DO NOT MODIFY THIS FUNCTION CALL
 	// except as instructed
 
-	PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
+	/*PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
 		if ( user === PS.ERROR ) {
 			return PS.dbErase( TEAM );
 		}
 		PS.dbEvent( TEAM, "startup", user );
 		PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
-	}, { active : false } );
+	}, { active : false } );*/
 };
 
 /*
@@ -67,9 +83,35 @@ PS.touch = function( x, y, data, options ) {
 
 	// PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
 
+	PS.color( x, y, data ); // set color to current value of data
+
+	// Decide what the next color should be.
+	// If the current value was black, change it to white.
+	// Otherwise change it to black.
+
+	let next; // variable to save next color
+
+	if ( data === PS.COLOR_BLACK ) {
+		next = PS.COLOR_WHITE;
+	}
+	else {
+		next = PS.COLOR_BLACK;
+	}
+
+	// NOTE: The above statement could be expressed more succinctly using JavaScript's ternary operator:
+	// let next = ( data === PS.COLOR_BLACK ) ? PS.COLOR_WHITE : PS.COLOR_BLACK;
+
+	// Remember the newly-changed color by storing it in the bead's data.
+
+	PS.data( x, y, next );
+
+	// Play click sound.
+
+	PS.audioPlay( "fx_click" );
 	// Add code here for mouse clicks/touches
-	// over a bead.
+	// over a bead
 };
+
 
 /*
 PS.release ( x, y, data, options )
@@ -154,7 +196,27 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 	// Uncomment the following code line to inspect first three parameters:
 
 	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
-
+	//Up
+	if(key === 1006)
+	{
+		player.y = player.y - 1
+	}
+	//Left
+	else if(key === 1005)
+	{
+		player.x = player.x - 1;
+	}
+	//Right
+	else if(key === 1007)
+	{
+		player.x = player.x + 1;
+	}
+	//Down
+	else if(key === 1008)
+	{
+		player.y = player.y + 1;
+	}
+	updatePosition();
 	// Add code here for when a key is pressed.
 };
 
@@ -213,3 +275,15 @@ PS.shutdown = function( options ) {
 	// Add code here to tidy up when Perlenspiel is about to close.
 };
 
+function updatePosition()
+{
+
+
+	// Set plane to 1 (above floor)
+
+	PS.spritePlane( player.id, 1 );
+
+	// Position sprite at center of grid
+
+	PS.spriteMove( player.id, player.x, player.y );
+}
