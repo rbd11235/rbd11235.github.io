@@ -1,18 +1,17 @@
 /*
 game.js for Perlenspiel 3.3.x
-Last revision: 2018-10-14 (BM)
+Last revision: 2021-03-24 (BM)
+
+The following comment lines are for JSHint <https://jshint.com>, a tool for monitoring code quality.
+You may find them useful if your development environment is configured to support JSHint.
+If you don't use JSHint (or are using it with a configuration file), you can safely delete these lines.
+*/
 
 /* jshint browser : true, devel : true, esversion : 6, freeze : true */
 /* globals PS : true */
 
-"use strict"; // do not remove this directive!
+"use strict"; // Do NOT delete this directive!
 
-//Ryan Doyle
-//Mod 1: Grid size changed to 7 x 8
-//Mod 2: Clicking bottom row of beads changes the draw color
-//Mod 3: New sound effect when changing color
-//Mod 4: Top border width of bottom row changed to 5
-//Mod 5: You can hold down the left mouse button to draw lines
 /*
 PS.init( system, options )
 Called once after engine is initialized but before event-polling begins.
@@ -23,47 +22,33 @@ Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-var gameModel =
-	{
-		drawColor: PS.COLOR_BLACK,
-		mouseDown: false
-	};
-
-
 PS.init = function( system, options ) {
+	// Change this string to your team name
+	// Use only ALPHABETIC characters
+	// No numbers, spaces or punctuation!
 
-	// Establish grid dimensions
-	
-	PS.gridSize( 20, 20 );
-	// Set background color to Perlenspiel logo gray
-	PS.gridColor( 0x303030 );
-	PS.color(0, 7, PS.COLOR_RED);
-	PS.color(1, 7, PS.COLOR_ORANGE);
-	PS.color(2, 7, PS.COLOR_YELLOW);
-	PS.color(3, 7, PS.COLOR_GREEN);
-	PS.color(4, 7, PS.COLOR_BLUE);
-	PS.color(5, 7, PS.COLOR_VIOLET);
-	PS.color(6, 7, PS.COLOR_BLACK);
+	const TEAM = "teamname";
 
-	for(var x=0; x < 7; x++)
-	{
+	// Begin with essential setup
+	// Establish initial grid size
 
-		let w = {
-			top : 5,
-			left : 1,
-			bottom : 1,
-			right : 1
-		};
-		PS.border(x, 7, w);
-	}
-	// Change status line color and text
-	PS.data(PS.ALL, PS.ALL, PS.COLOR_WHITE)
-	PS.statusColor( PS.COLOR_WHITE );
-	PS.statusText( "Touch any bead" );
-	
-	// Preload click sound
+	PS.gridSize( 8, 8 ); // or whatever size you want
 
-	PS.audioLoad( "fx_click" );
+	// Install additional initialization code
+	// here as needed
+
+	// PS.dbLogin() must be called at the END
+	// of the PS.init() event handler (as shown)
+	// DO NOT MODIFY THIS FUNCTION CALL
+	// except as instructed
+
+	PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
+		if ( user === PS.ERROR ) {
+			return PS.dbErase( TEAM );
+		}
+		PS.dbEvent( TEAM, "startup", user );
+		PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
+	}, { active : false } );
 };
 
 /*
@@ -77,43 +62,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 */
 
 PS.touch = function( x, y, data, options ) {
-	// Toggle color of touched bead from white to black and back again
-	// NOTE: The default value of a bead's [data] is 0, which happens to be equal to PS.
-	gameModel.mouseDown = true;
-	if(y < 7)
-	{
-		let next; // variable to save next color
+	// Uncomment the following code line
+	// to inspect x/y parameters:
 
-		if ( data === gameModel.drawColor) {
-			next = PS.COLOR_WHITE;
-		}
-		else {
-			next = gameModel.drawColor;
-		}
+	// PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
 
-		PS.color( x, y, next); // set color to current value of data
-		PS.data( x, y, next );
-		// Decide what the next color should be.
-		// If the current value was black, change it to white.
-		// Otherwise change it to black.
-
-
-		// NOTE: The above statement could be expressed more succinctly using JavaScript's ternary operator:
-		// let next = ( data === PS.COLOR_BLACK ) ? PS.COLOR_WHITE : PS.COLOR_BLACK;
-
-		// Remember the newly-changed color by storing it in the bead's data.
-
-
-		// Play click sound.
-
-		PS.audioPlay( "fx_click" );
-	}
-	else
-	{
-		gameModel.drawColor = PS.color(x, y);
-		PS.audioPlay("fx_squish")
-	}
-
+	// Add code here for mouse clicks/touches
+	// over a bead.
 };
 
 /*
@@ -126,22 +81,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.release() event handler:
-
-
-
 PS.release = function( x, y, data, options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.release() @ " + x + ", " + y + "\n" );
 
 	// Add code here for when the mouse button/touch is released over a bead.
-	gameModel.mouseDown = false;
 };
-
-
 
 /*
 PS.enter ( x, y, button, data, options )
@@ -153,24 +99,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.enter() event handler:
-
-
-
 PS.enter = function( x, y, data, options ) {
-	"use strict"; // Do not remove this directive!
-	if(gameModel.mouseDown)
-	{
-		PS.touch(x, y, data, options)
-	}
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.enter() @ " + x + ", " + y + "\n" );
 
 	// Add code here for when the mouse cursor/touch enters a bead.
 };
-
-
 
 /*
 PS.exit ( x, y, data, options )
@@ -182,21 +117,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.exit() event handler:
-
-/*
-
 PS.exit = function( x, y, data, options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.exit() @ " + x + ", " + y + "\n" );
 
 	// Add code here for when the mouse cursor/touch exits a bead.
 };
-
-*/
 
 /*
 PS.exitGrid ( options )
@@ -205,22 +132,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.exitGrid() event handler:
-
-
-
 PS.exitGrid = function( options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to verify operation:
 
 	// PS.debug( "PS.exitGrid() called\n" );
 
 	// Add code here for when the mouse cursor/touch moves off the grid.
-	gameModel.mouseDown = false;
 };
-
-
 
 /*
 PS.keyDown ( key, shift, ctrl, options )
@@ -232,21 +150,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.keyDown() event handler:
-
-/*
-
 PS.keyDown = function( key, shift, ctrl, options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to inspect first three parameters:
 
 	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 
 	// Add code here for when a key is pressed.
 };
-
-*/
 
 /*
 PS.keyUp ( key, shift, ctrl, options )
@@ -258,21 +168,13 @@ This function doesn't have to do anything. Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.keyUp() event handler:
-
-/*
-
 PS.keyUp = function( key, shift, ctrl, options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to inspect first three parameters:
 
 	// PS.debug( "PS.keyUp(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 
 	// Add code here for when a key is released.
 };
-
-*/
 
 /*
 PS.input ( sensors, options )
@@ -283,25 +185,17 @@ This function doesn't have to do anything. Any value returned is ignored.
 NOTE: Currently, only mouse wheel events are reported, and only when the mouse cursor is positioned directly over the grid.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.input() event handler:
-
-/*
-
 PS.input = function( sensors, options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code lines to inspect first parameter:
 
-//	 var device = sensors.wheel; // check for scroll wheel
-//
-//	 if ( device ) {
-//	   PS.debug( "PS.input(): " + device + "\n" );
-//	 }
+	//	 var device = sensors.wheel; // check for scroll wheel
+	//
+	//	 if ( device ) {
+	//	   PS.debug( "PS.input(): " + device + "\n" );
+	//	 }
 
 	// Add code here for when an input event is detected.
 };
-
-*/
 
 /*
 PS.shutdown ( options )
@@ -311,13 +205,7 @@ This function doesn't have to do anything. Any value returned is ignored.
 NOTE: This event is generally needed only by applications utilizing networked telemetry.
 */
 
-// UNCOMMENT the following code BLOCK to expose the PS.shutdown() event handler:
-
-/*
-
 PS.shutdown = function( options ) {
-	"use strict"; // Do not remove this directive!
-
 	// Uncomment the following code line to verify operation:
 
 	// PS.debug( "“Dave. My mind is going. I can feel it.”\n" );
@@ -325,4 +213,3 @@ PS.shutdown = function( options ) {
 	// Add code here to tidy up when Perlenspiel is about to close.
 };
 
-*/
