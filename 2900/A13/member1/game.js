@@ -40,6 +40,16 @@ const GRIDY = 8
 
 PS.init = function( system, options ) {
 	PS.gridSize( GRIDX, GRIDY ); // or whatever size you want
+	for(var x=1; x < (GRIDX - 1); x++)
+	{
+		let w = {
+			top : 5,
+			left : 1,
+			bottom : 1,
+			right : 1
+		};
+		PS.border(x, 1, w);
+	}
 	// Change this string to your team name
 	// Use only ALPHABETIC characters
 	// No numbers, spaces or punctuation!
