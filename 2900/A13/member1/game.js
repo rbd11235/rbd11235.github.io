@@ -34,22 +34,110 @@ var player = {
 
 var blocks = [];
 
-const GRIDX = 8
+const GRIDX = 9
 const GRIDY = 8
 
 
 PS.init = function( system, options ) {
-	PS.gridSize( GRIDX, GRIDY ); // or whatever size you want
-	for(var x=1; x < (GRIDX - 1); x++)
+	PS.statusText("Team Swift")
+	PS.gridSize( GRIDX, GRIDY + 2 ); // or whatever size you want
+	for(var x=2; x < (GRIDX - 2); x++)
 	{
-		let w = {
+		let w1 = {
 			top : 5,
 			left : 1,
 			bottom : 1,
 			right : 1
 		};
-		PS.border(x, 1, w);
+		let w2 = {
+			top : 1,
+			left : 1,
+			bottom : 5,
+			right : 1
+		};
+		PS.border(x, 1, w1);
+		PS.border(x, GRIDY - 2, w2);
 	}
+
+	for(var y=2; y < (GRIDY - 2); y++)
+	{
+		let w1 = {
+			top : 1,
+			left : 5,
+			bottom : 1,
+			right : 1
+		};
+		let w2 = {
+			top : 1,
+			left : 1,
+			bottom : 1,
+			right : 5
+		};
+		PS.border(1, y, w1);
+		PS.border(GRIDX - 2, y, w2);
+	}
+
+	for(var x=0; x < GRIDX; x++)
+	{
+		let w1 = {
+			top : 5,
+			left : 1,
+			bottom : 1,
+			right : 1
+		};
+		PS.border(x, GRIDY, w1);
+	}
+
+	let c1 = {
+		top : 5,
+		left : 5,
+		bottom : 1,
+		right : 1
+	}
+
+	let c2 = {
+		top : 5,
+		left : 1,
+		bottom : 1,
+		right : 5
+	}
+
+	let c3 = {
+		top : 1,
+		left : 1,
+		bottom : 5,
+		right : 5
+	}
+
+	let c4 = {
+		top : 1,
+		left : 5,
+		bottom : 5,
+		right : 1
+	}
+
+	PS.border(1, 1, c1);
+	PS.border(GRIDX - 2, 1, c2);
+	PS.border(GRIDX - 2, GRIDY - 2, c3);
+	PS.border(1, GRIDY - 2, c4);
+
+	let upX = GRIDX/2;
+	let upY = GRIDY;
+	let downX = GRIDX/2;
+	let downY = GRIDY + 1;
+	let leftX = (GRIDX/2) - 1;
+	let leftY = GRIDY + 1;
+	let rightX = (GRIDX/2) + 1;
+	let rightY = GRIDY + 1;
+
+	PS.glyph(upX, upY, "^");
+	PS.glyph(downX, downY, "v");
+	PS.glyph(leftX, leftY, "<");
+	PS.glyph(rightX, rightY, ">");
+	PS.exec(upX, upY, clickedUp)
+	PS.exec(downX, downY, clickedDown)
+	PS.exec(leftX, leftY, clickedLeft)
+	PS.exec(rightX, rightY, clickedRight)
 	// Change this string to your team name
 	// Use only ALPHABETIC characters
 	// No numbers, spaces or punctuation!
@@ -90,13 +178,13 @@ PS.init = function( system, options ) {
 	// DO NOT MODIFY THIS FUNCTION CALL
 	// except as instructed
 
-	/*PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
+	PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
        if ( user === PS.ERROR ) {
           return PS.dbErase( TEAM );
        }
        PS.dbEvent( TEAM, "startup", user );
        PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
-    }, { active : false } );*/
+    }, { active : false } );
 };
 
 /*
@@ -249,65 +337,129 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 
 	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 	//Up
-	if(key === 1006)
+	var didMove = true;
+	if(key === 1006 || key === 119)
 	{
 		if(player.y > 0) {
-			player.y = player.y - 1
+
 			if(player.toUp !== "")
 			{
-				var boxPos = PS.spriteMove(player.toUp, PS.CURRENT, PS.CURRENT);
-				PS.spriteMove(player.toUp, boxPos.x, boxPos.y - 1);
-				PS.spriteShow(player.toUp)
+				if(player.y == 2)
+				{
+					didMove = false;
+				}
+				else
+				{
+					player.y = player.y - 1
+					var boxPos = PS.spriteMove(player.toUp, PS.CURRENT, PS.CURRENT);
+					PS.spriteMove(player.toUp, boxPos.x, boxPos.y - 1);
+					PS.spriteShow(player.toUp)
+					PS.audioPlay( "fx_scratch" );
+
+				}
+
+			}
+			else
+			{
+				player.y = player.y - 1
 			}
 		}
 	}
 	//Left
-	else if(key === 1005)
+	else if(key === 1005 || key === 97)
 	{
 		if(player.x > 0) {
-			player.x = player.x - 1;
 			if(player.toLeft !== "")
 			{
-				var boxPos = PS.spriteMove(player.toLeft, PS.CURRENT, PS.CURRENT);
-				PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
-				PS.spriteShow(player.toLeft)
+				if(player.x == 2)
+				{
+					didMove = false;
+				}
+				else
+				{
+					player.x = player.x - 1;
+					var boxPos = PS.spriteMove(player.toLeft, PS.CURRENT, PS.CURRENT);
+					PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
+					PS.spriteShow(player.toLeft)
+					PS.audioPlay( "fx_scratch" );
+				}
+
+			}
+			else
+			{
+				player.x = player.x - 1;
 			}
 		}
 	}
 	//Right
-	else if(key === 1007)
+	else if(key === 1007 || key === 100)
 	{
 		if(player.x < (GRIDX - 1))
 		{
-			player.x = player.x + 1;
+
 			if(player.toRight !== "")
 			{
-				var boxPos = PS.spriteMove(player.toRight, PS.CURRENT, PS.CURRENT);
-				PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
-				PS.spriteShow(player.toRight)
+				if(player.x == (GRIDX - 3))
+				{
+					didMove = false;
+				}
+				else
+				{
+					player.x = player.x + 1;
+					var boxPos = PS.spriteMove(player.toRight, PS.CURRENT, PS.CURRENT);
+					PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
+					PS.spriteShow(player.toRight)
+					PS.audioPlay( "fx_scratch" );
+				}
+
+			}
+			else
+			{
+				player.x = player.x + 1;
 			}
 		}
 
 	}
 	//Down
-	else if(key === 1008)
+	else if(key === 1008 || key === 115)
 	{
 		if(player.y < (GRIDY - 1))
 		{
-			player.y = player.y + 1;
+
 			if(player.toDown !== "")
 			{
-				var boxPos = PS.spriteMove(player.toDown, PS.CURRENT, PS.CURRENT);
-				PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
-				PS.spriteShow(player.toDown)
+				if(player.y == (GRIDY - 3))
+				{
+					didMove = false;
+				}
+				else
+				{
+					player.y = player.y + 1;
+					var boxPos = PS.spriteMove(player.toDown, PS.CURRENT, PS.CURRENT);
+					PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
+					PS.spriteShow(player.toDown)
+					PS.audioPlay( "fx_scratch" );
+				}
+			}
+			else
+			{
+				player.y = player.y + 1;
 			}
 		}
 
 	}
-	player.toDown = "";
-	player.toUp = "";
-	player.toLeft = "";
-	player.toRight = "";
+	if(didMove)
+	{
+		player.toDown = "";
+		player.toUp = "";
+		player.toLeft = "";
+		player.toRight = "";
+	}
+	else
+	{
+		PS.audioPlay( "fx_squink" );
+	}
+
 	updatePosition();
 	// Add code here for when a key is pressed.
 };
@@ -379,7 +531,25 @@ function updatePosition()
 
 	PS.spriteMove( player.id, player.x, player.y );
 
-
-
 }
+
+var clickedLeft = function( x, y, data ) {
+	PS.keyDown(1005, false, false, null)
+};
+
+var clickedRight = function( x, y, data ) {
+	PS.keyDown(1007, false, false, null)
+};
+
+var clickedUp = function( x, y, data ) {
+	PS.keyDown(1006, false, false, null)
+};
+
+var clickedDown = function( x, y, data ) {
+	PS.keyDown(1008, false, false, null)
+};
+
+
+
+
 
