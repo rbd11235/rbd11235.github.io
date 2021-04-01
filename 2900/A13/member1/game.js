@@ -24,15 +24,22 @@ Any value returned is ignored.
 
 var player = {
 	id: "",
-	x: 3,
-	y: 4
+	x: 0,
+	y: 0,
+	toLeft: "",
+	toRight: "",
+	toUp: "",
+	toDown: "",
 }
 
 var blocks = [];
 
+const GRIDX = 8
+const GRIDY = 8
+
 
 PS.init = function( system, options ) {
-	PS.gridSize( 8, 8 ); // or whatever size you want
+	PS.gridSize( GRIDX, GRIDY ); // or whatever size you want
 	// Change this string to your team name
 	// Use only ALPHABETIC characters
 	// No numbers, spaces or punctuation!
@@ -41,13 +48,28 @@ PS.init = function( system, options ) {
 	// Set color to red
 
 	PS.spriteSolidColor( player.id, PS.COLOR_RED );
+	PS.spriteCollide(player.id, collisionFunc)
 
-	updatePosition();
 	const TEAM = "TeamSwift";
 
 	// Begin with essential setup
 	// Establish initial grid size
+	for(var i=0; i < 1; i++)
+	{
+		var block =
+			{
+				sprite: PS.spriteSolid(1, 1),
+				x: (2 + i),
+				y: (2 + i)
+			}
+		PS.spriteSolidColor( block.sprite, PS.COLOR_BLACK);
+		PS.spritePlane( block.sprite, 1 );
+		PS.spriteMove(block.sprite, block.x, block.y);
+		blocks.push(block);
+	}
 
+
+	updatePosition();
 
 
 	// Install additional initialization code
@@ -59,12 +81,12 @@ PS.init = function( system, options ) {
 	// except as instructed
 
 	/*PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
-		if ( user === PS.ERROR ) {
-			return PS.dbErase( TEAM );
-		}
-		PS.dbEvent( TEAM, "startup", user );
-		PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
-	}, { active : false } );*/
+       if ( user === PS.ERROR ) {
+          return PS.dbErase( TEAM );
+       }
+       PS.dbEvent( TEAM, "startup", user );
+       PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
+    }, { active : false } );*/
 };
 
 /*
@@ -83,34 +105,54 @@ PS.touch = function( x, y, data, options ) {
 
 	// PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
 
-	PS.color( x, y, data ); // set color to current value of data
 
 	// Decide what the next color should be.
 	// If the current value was black, change it to white.
 	// Otherwise change it to black.
 
-	let next; // variable to save next color
 
-	if ( data === PS.COLOR_BLACK ) {
-		next = PS.COLOR_WHITE;
-	}
-	else {
-		next = PS.COLOR_BLACK;
-	}
 
 	// NOTE: The above statement could be expressed more succinctly using JavaScript's ternary operator:
 	// let next = ( data === PS.COLOR_BLACK ) ? PS.COLOR_WHITE : PS.COLOR_BLACK;
 
 	// Remember the newly-changed color by storing it in the bead's data.
 
-	PS.data( x, y, next );
-
-	// Play click sound.
-
-	PS.audioPlay( "fx_click" );
 	// Add code here for mouse clicks/touches
 	// over a bead
 };
+
+var collisionFunc = function ( s1, p1, s2, p2, type ) {
+
+	if ( type === PS.SPRITE_TOUCH ) {
+		type = " touched "
+		var s1Pos = PS.spriteMove(s1, PS.CURRENT, PS.CURRENT);
+
+		var s2Pos = PS.spriteMove(s2, PS.CURRENT, PS.CURRENT);
+		let diffX = s2Pos.x - s1Pos.x;
+		let diffY = s2Pos.y - s1Pos.y;
+		if(diffX == 1 && diffY == 0)
+		{
+			player.toRight = s2;
+		}
+		else if(diffX == -1 && diffY == 0)
+		{
+			player.toLeft = s2;
+		}
+		else if(diffY == 1 && diffX == 0)
+		{
+			player.toDown = s2;
+		}
+		else if(diffY == -1 && diffX == 0)
+		{
+			player.toUp = s2;
+		}
+	}
+	else {
+		type = " overlapped ";
+	}
+	//PS.debug( s1 + type + s2 );
+};
+
 
 
 /*
@@ -199,23 +241,63 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 	//Up
 	if(key === 1006)
 	{
-		player.y = player.y - 1
+		if(player.y > 0) {
+			player.y = player.y - 1
+			if(player.toUp !== "")
+			{
+				var boxPos = PS.spriteMove(player.toUp, PS.CURRENT, PS.CURRENT);
+				PS.spriteMove(player.toUp, boxPos.x, boxPos.y - 1);
+				PS.spriteShow(player.toUp)
+			}
+		}
 	}
 	//Left
 	else if(key === 1005)
 	{
-		player.x = player.x - 1;
+		if(player.x > 0) {
+			player.x = player.x - 1;
+			if(player.toLeft !== "")
+			{
+				var boxPos = PS.spriteMove(player.toLeft, PS.CURRENT, PS.CURRENT);
+				PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
+				PS.spriteShow(player.toLeft)
+			}
+		}
 	}
 	//Right
 	else if(key === 1007)
 	{
-		player.x = player.x + 1;
+		if(player.x < (GRIDX - 1))
+		{
+			player.x = player.x + 1;
+			if(player.toRight !== "")
+			{
+				var boxPos = PS.spriteMove(player.toRight, PS.CURRENT, PS.CURRENT);
+				PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
+				PS.spriteShow(player.toRight)
+			}
+		}
+
 	}
 	//Down
 	else if(key === 1008)
 	{
-		player.y = player.y + 1;
+		if(player.y < (GRIDY - 1))
+		{
+			player.y = player.y + 1;
+			if(player.toDown !== "")
+			{
+				var boxPos = PS.spriteMove(player.toDown, PS.CURRENT, PS.CURRENT);
+				PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
+				PS.spriteShow(player.toDown)
+			}
+		}
+
 	}
+	player.toDown = "";
+	player.toUp = "";
+	player.toLeft = "";
+	player.toRight = "";
 	updatePosition();
 	// Add code here for when a key is pressed.
 };
@@ -250,11 +332,11 @@ NOTE: Currently, only mouse wheel events are reported, and only when the mouse c
 PS.input = function( sensors, options ) {
 	// Uncomment the following code lines to inspect first parameter:
 
-	//	 var device = sensors.wheel; // check for scroll wheel
+	//  var device = sensors.wheel; // check for scroll wheel
 	//
-	//	 if ( device ) {
-	//	   PS.debug( "PS.input(): " + device + "\n" );
-	//	 }
+	//  if ( device ) {
+	//    PS.debug( "PS.input(): " + device + "\n" );
+	//  }
 
 	// Add code here for when an input event is detected.
 };
@@ -286,4 +368,8 @@ function updatePosition()
 	// Position sprite at center of grid
 
 	PS.spriteMove( player.id, player.x, player.y );
+
+
+
 }
+
