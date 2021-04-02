@@ -184,7 +184,7 @@ PS.init = function( system, options ) {
        }
        PS.dbEvent( TEAM, "startup", user );
        PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
-    }, { active : false } );
+    }, { active : true } );
 };
 
 /*
