@@ -138,37 +138,41 @@ var G = ( function () {
 		{
 			let topWidth = {
 				top : 5,
-				left : 1,
-				bottom : 1,
-				right : 1
+				left : 0,
+				bottom : 0,
+				right : 0
 			};
 			let bottomWidth = {
-				top : 1,
-				left : 1,
+				top : 0,
+				left : 0,
 				bottom : 5,
-				right : 1
+				right : 0
 			};
 			PS.border(x, 1, topWidth);
 			PS.border(x, GRIDY - 2, bottomWidth);
+			PS.borderColor(x, 1, PS.COLOR_WHITE);
+			PS.borderColor(x, GRIDY - 2, PS.COLOR_WHITE);
 		}
 
 		//For the left and right of fence
 		for(var y=2; y < (GRIDY - 2); y++)
 		{
 			let leftWidth = {
-				top : 1,
+				top : 0,
 				left : 5,
-				bottom : 1,
-				right : 1
+				bottom : 0,
+				right : 0
 			};
 			let rightWidth = {
-				top : 1,
-				left : 1,
-				bottom : 1,
+				top : 0,
+				left : 0,
+				bottom : 0,
 				right : 5
 			};
 			PS.border(1, y, leftWidth);
 			PS.border(GRIDX - 2, y, rightWidth);
+			PS.borderColor(1, y, PS.COLOR_WHITE);
+			PS.borderColor(GRIDX - 2, y, PS.COLOR_WHITE);
 		}
 
 		//For the border separating the game and the user interface
@@ -176,46 +180,53 @@ var G = ( function () {
 		{
 			let width = {
 				top : 5,
-				left : 1,
-				bottom : 1,
-				right : 1
+				left : 0,
+				bottom : 0,
+				right : 0
 			};
 			PS.border(x, GRIDY, width);
+			PS.borderColor(x, GRIDY, PS.COLOR_BLACK)
+			//PS.border(x, )
 		}
 
 		//For the corners of the fence
 		let corner1 = {
 			top : 5,
 			left : 5,
-			bottom : 1,
-			right : 1
+			bottom : 0,
+			right : 0
 		}
 
 		let corner2 = {
 			top : 5,
-			left : 1,
-			bottom : 1,
+			left : 0,
+			bottom : 0,
 			right : 5
 		}
 
 		let corner3 = {
-			top : 1,
-			left : 1,
+			top : 0,
+			left : 0,
 			bottom : 5,
 			right : 5
 		}
 
 		let corner4 = {
-			top : 1,
+			top : 0,
 			left : 5,
 			bottom : 5,
-			right : 1
+			right : 0
 		}
 
 		PS.border(1, 1, corner1);
 		PS.border(GRIDX - 2, 1, corner2);
 		PS.border(GRIDX - 2, GRIDY - 2, corner3);
 		PS.border(1, GRIDY - 2, corner4);
+
+		PS.borderColor(1, 1, PS.COLOR_WHITE);
+		PS.borderColor(GRIDX - 2, 1, PS.COLOR_WHITE);
+		PS.borderColor(GRIDX - 2, GRIDY - 2, PS.COLOR_WHITE);
+		PS.borderColor(1, GRIDY - 2, PS.COLOR_WHITE);
 	}
 
 	//Creates the user interface and hooks up the buttons to the click methods
@@ -231,10 +242,41 @@ var G = ( function () {
 		let rightX = (GRIDX/2) + 1;
 		let rightY = GRIDY + 1;
 
+
+		let widthUp = {
+			top : 5,
+			left : 5,
+			bottom : 0,
+			right : 5
+		}
+
+		let widthLeft = {
+			top : 5,
+			left : 5,
+			bottom : 5,
+			right : 0
+		}
+
+		let widthRight = {
+			top : 5,
+			left : 0,
+			bottom : 5,
+			right : 5
+		}
 		PS.glyph(upX, upY, "^");
 		PS.glyph(downX, downY, "v");
 		PS.glyph(leftX, leftY, "<");
 		PS.glyph(rightX, rightY, ">");
+
+		PS.border(upX, upY, widthUp);
+		PS.border(downX, downY, 5);
+		PS.border(leftX, leftY, widthLeft);
+		PS.border(rightX, rightY, widthRight);
+
+		PS.borderColor(upX, upY, PS.COLOR_BLACK);
+		PS.borderColor(downX, downY, PS.COLOR_BLACK);
+		PS.borderColor(leftX, leftY, PS.COLOR_BLACK);
+		PS.borderColor(rightX, rightY, PS.COLOR_BLACK);
 		PS.exec(upX, upY, clickedUp)
 		PS.exec(downX, downY, clickedDown)
 		PS.exec(leftX, leftY, clickedLeft)
@@ -252,6 +294,7 @@ var G = ( function () {
 				}
 			}
 			PS.gridColor(0x4eb63d)
+			PS.border(PS.ALL, PS.ALL, 0)
 
 
 			addBorder();
