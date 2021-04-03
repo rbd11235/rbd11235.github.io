@@ -42,6 +42,15 @@ var G = ( function () {
 	const GRIDX = 9
 	const GRIDY = 8
 
+	// Here a counter is formed to measure the amount of times a
+	// particular bead has been touched by the player block.
+	const Square=[];
+	for (var a=0; a<GRIDX; a++)  {
+		for (var b=0; b<GRIDY; b++)  {
+			Square.push({positionX:a,positionY:b,Counter:0});
+		}
+	}
+
 	//Amount of boxes to spawn.
 	//Should be kept at 1 unless collisions for multiple boxes are implemented
 	const BOXES = 1
@@ -108,6 +117,16 @@ var G = ( function () {
 		// Position sprite at center of grid
 
 		PS.spriteMove( player.spriteId, player.x, player.y );
+		// Here it is determined if a square has been touched by the player bead more than 5 times
+		// and if so it sets the square color to brown
+		for(var i=0;i<Square.length;i++){
+			if (Square[i].positionX==player.x&&Square[i].positionY==player.y){
+				Square[i].Counter++;
+				if (Square[i].Counter>=5){
+					PS.color(player.x,player.y, 0x552628)
+				}
+			}
+		}
 
 	};
 
@@ -226,6 +245,14 @@ var G = ( function () {
 			PS.statusText("Team Swift")
 			//Adds 2 rows to the bottom for the user interface.
 			PS.gridSize( GRIDX, GRIDY + 2 );
+			//Here the grid and backgrounds are set to green
+			for (var a=0; a<GRIDX; a++)  {
+				for (var b=0; b<GRIDY; b++)  {
+					PS.color(a,b,0x4eb63d)
+				}
+			}
+			PS.gridColor(0x4eb63d)
+
 
 			addBorder();
 			addUI();
@@ -454,7 +481,7 @@ var G = ( function () {
 				}
 			}
 			//If right or D
- 			else if(key === 1007 || key === 100)
+			else if(key === 1007 || key === 100)
 			{
 				if(player.x < (GRIDX - 1))
 				{
@@ -605,13 +632,3 @@ PS.keyUp = G.keyUp;
 PS.input = G.input;
 
 PS.shutdown = G.shutdown;
-
-
-
-
-
-
-
-
-
-
