@@ -1,7 +1,6 @@
 /*
 game.js for Perlenspiel 3.3.x
 Last revision: 2021-03-24 (BM)
-
 The following comment lines are for JSHint <https://jshint.com>, a tool for monitoring code quality.
 You may find them useful if your development environment is configured to support JSHint.
 If you don't use JSHint (or are using it with a configuration file), you can safely delete these lines.
@@ -506,7 +505,7 @@ var G = ( function () {
 							// Here it is determined if a square has been touched by the player bead more than 5 times
 							// and if so it sets the square color to brown
 
-							PS.audioPlay( "fx_scratch" );
+							PS.audioPlay("Pushing", {path:"./"});
 
 						}
 
@@ -517,6 +516,7 @@ var G = ( function () {
 					}
 				}
 			}
+
 			//If left or A
 			else if(key === 1005 || key === 97)
 			{
@@ -534,7 +534,7 @@ var G = ( function () {
 							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
 							PS.spriteShow(player.toLeft)
-							PS.audioPlay( "fx_scratch" );
+							PS.audioPlay("Pushing", {path:"./"});
 						}
 
 					}
@@ -563,7 +563,7 @@ var G = ( function () {
 							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
 							PS.spriteShow(player.toRight)
-							PS.audioPlay( "fx_scratch" );
+							PS.audioPlay("Pushing", {path:"./"});
 						}
 
 					}
@@ -593,7 +593,7 @@ var G = ( function () {
 							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
 							PS.spriteShow(player.toDown)
-							PS.audioPlay( "fx_scratch" );
+							PS.audioPlay("Pushing", {path:"./"});
 						}
 					}
 					else
@@ -614,9 +614,11 @@ var G = ( function () {
 			//If trying to push box outside the fence, play sound effect
 			else
 			{
-				PS.audioPlay( "fx_squink" );
+				PS.audioPlay("Hitting", {path:"./"});
 			}
-
+if (didMove){
+	PS.audioPlay("Stepping", {path:"./"});
+}
 			//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 			updatePosition();
 
@@ -698,3 +700,4 @@ PS.keyUp = G.keyUp;
 PS.input = G.input;
 
 PS.shutdown = G.shutdown;
+
