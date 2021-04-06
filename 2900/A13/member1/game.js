@@ -42,6 +42,14 @@ var G = ( function () {
 	const GRIDX = 9
 	const GRIDY = 8
 
+	//Amount of different shades of grass/dirt to cycle through.
+	//If this is set to 10, it will take 10 passes of pushing the block over a square before the final color is revealed.
+	const NUM_SHADES = 10;
+
+	//Color of the dirt and grass represented as RGB Triplets
+	const DIRT_COLOR = [79,46,30];
+	const GRASS_COLOR = [37,125,34];
+
 	// Here a counter is formed to measure the amount of times a
 	// particular bead has been touched by the player block.
 	const Square=[];
@@ -73,6 +81,24 @@ var G = ( function () {
 		PS.keyDown(1008, false, false, null)
 	};
 
+
+	var distortGround = function(x, y) {
+		for(var i=0;i<Square.length;i++){
+			if (Square[i].positionX === x && Square[i].positionY === y){
+				Square[i].Counter++;
+				//Value used to calculate the proportions of colors for mixing the grass and dirt colors
+				let mixValue = 1.0 - ((1.0/NUM_SHADES) * Square[i].Counter)
+				let mixR = (GRASS_COLOR[0] * mixValue) + (DIRT_COLOR[0] * (1 - mixValue))
+				let mixG = (GRASS_COLOR[1] * mixValue) + (DIRT_COLOR[1] * (1 - mixValue))
+				let mixB = (GRASS_COLOR[2] * mixValue) + (DIRT_COLOR[2] * (1 - mixValue))
+				let groundColor = [mixR, mixG, mixB]
+				if (Square[i].Counter <= NUM_SHADES){
+					PS.color(x, y, groundColor)
+
+				}
+			}
+		}
+	}
 	//Called when the player touches another box.
 	//Updates player values to indicate there is now a box next to the player.
 	var collisionFunc = function ( s1, p1, s2, p2, type ) {
@@ -117,16 +143,6 @@ var G = ( function () {
 		// Position sprite at center of grid
 
 		PS.spriteMove( player.spriteId, player.x, player.y );
-		// Here it is determined if a square has been touched by the player bead more than 5 times
-		// and if so it sets the square color to brown
-		for(var i=0;i<Square.length;i++){
-			if (Square[i].positionX==player.x&&Square[i].positionY==player.y){
-				Square[i].Counter++;
-				if (Square[i].Counter>=5){
-					PS.color(player.x,player.y, 0x552628)
-				}
-			}
-		}
 
 	};
 
@@ -290,10 +306,10 @@ var G = ( function () {
 			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
-					PS.color(a,b,0x4eb63d)
+					PS.color(a,b,GRASS_COLOR)
 				}
 			}
-			PS.gridColor(0x4eb63d)
+			PS.gridColor(GRASS_COLOR)
 			PS.border(PS.ALL, PS.ALL, 0)
 
 
@@ -339,10 +355,10 @@ var G = ( function () {
 
 			PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
 				if ( user === PS.ERROR ) {
-					return PS.dbErase( TEAM );
+					return;
 				}
 				PS.dbEvent( TEAM, "startup", user );
-				PS.dbSave( TEAM, PS.CURRENT, { discard : true } );
+				PS.dbSend( TEAM, PS.CURRENT, { discard : true } );
 			}, { active : true } );
 		},
 
@@ -484,8 +500,12 @@ var G = ( function () {
 						{
 							player.y = player.y - 1
 							var boxPos = PS.spriteMove(player.toUp, PS.CURRENT, PS.CURRENT);
+							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toUp, boxPos.x, boxPos.y - 1);
 							PS.spriteShow(player.toUp)
+							// Here it is determined if a square has been touched by the player bead more than 5 times
+							// and if so it sets the square color to brown
+
 							PS.audioPlay( "fx_scratch" );
 
 						}
@@ -511,6 +531,7 @@ var G = ( function () {
 						{
 							player.x = player.x - 1;
 							var boxPos = PS.spriteMove(player.toLeft, PS.CURRENT, PS.CURRENT);
+							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
 							PS.spriteShow(player.toLeft)
 							PS.audioPlay( "fx_scratch" );
@@ -539,6 +560,7 @@ var G = ( function () {
 						{
 							player.x = player.x + 1;
 							var boxPos = PS.spriteMove(player.toRight, PS.CURRENT, PS.CURRENT);
+							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
 							PS.spriteShow(player.toRight)
 							PS.audioPlay( "fx_scratch" );
@@ -568,6 +590,7 @@ var G = ( function () {
 						{
 							player.y = player.y + 1;
 							var boxPos = PS.spriteMove(player.toDown, PS.CURRENT, PS.CURRENT);
+							distortGround(boxPos.x, boxPos.y);
 							PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
 							PS.spriteShow(player.toDown)
 							PS.audioPlay( "fx_scratch" );
