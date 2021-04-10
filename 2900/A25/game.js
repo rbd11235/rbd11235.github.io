@@ -39,8 +39,11 @@ var G = ( function () {
 	const GRIDX = 15
 	const GRIDY = 15
 
-	const BOMB = 0;
 	var board = {
+
+		width : 0,
+		height : 0,
+		pixelSize : 1,
 		data: [],
 		treasureX: 0,
 		treasureY: 0
@@ -90,15 +93,20 @@ var G = ( function () {
 	function generateBoard()
 	{
 		board.data = [];
+		for(var y=0; y < GRIDY; y++)
+		{
+			//PS.color(PS.ALL, y, WATER_COLOR)
+		}
 		for(var x=0; x < GRIDX; x++)
 		{
 			for(var y=0; y < GRIDY; y++)
 			{
-				let a = Math.floor(Math.random() * 5);
+				//Lower the value of the number here to increase the amount of reefs.
+				let a = Math.floor(Math.random() * 4);
 				if(a === 0)
 				{
 					board.data.push(0);
-					PS.color(x, y, PS.COLOR_ORANGE);
+					//PS.color(x, y, PS.COLOR_ORANGE);
 				}
 				else
 				{
@@ -120,31 +128,123 @@ var G = ( function () {
 			{
 				valid = true;
 				board.data[(goalX * GRIDX) + goalY] = 2;
-				PS.color(goalX, goalY, PS.COLOR_YELLOW);
+				//PS.color(goalX, goalY, PS.COLOR_YELLOW);
 				board.treasureX = goalX;
 				board.treasureY = goalY;
 			}
 		}
 
-	}
+	};
 
 	function checkSquare(squareX, squareY)
 	{
-		let value = board.data[(squareX * GRIDX) + squareY]
-		switch(value)
+
+		switch(getValue(squareX, squareY))
 		{
 			case 0:
 				player.gameOver = true;
 				PS.statusText("Your Ship Has Sunk");
 				break;
 			case 1:
+				addReefValue(squareX, squareY)
 				break;
 			case 2:
 				player.gameOver = true;
 				PS.statusText("You Found the Treasure!");
 				break;
 		}
-	}
+	};
+
+	function getValue(squareX, squareY)
+	{
+		let value = board.data[(squareX * GRIDX) + squareY];
+		return value;
+	};
+
+
+	function addReefValue(squareX, squareY)
+	{
+		var reefCounter = 0;
+		let checkUp = squareY > 0;
+		let checkRight = squareX < (GRIDX - 1);
+		let checkLeft = squareX > 0;
+		let checkDown = squareY < (GRIDY - 1);
+
+		if(checkUp && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp)
+		{
+			let v = getValue(squareX, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkRight)
+		{
+			let v = getValue(squareX + 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown)
+		{
+			let v = getValue(squareX, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		//Unicode characters for numbers start at 48.
+		PS.glyph(squareX, squareY, 48 + reefCounter);
+	};
 
 	//Creates the user interface and hooks up the buttons to the click methods
 	//Will center the UI horizontally based on the grid size
@@ -224,13 +324,14 @@ var G = ( function () {
 		PS.exec(downX, downY, clickedDown)
 		PS.exec(leftX, leftY, clickedLeft)
 		PS.exec(rightX, rightY, clickedRight)
-	}
+	};
 	var exports = {
 		init: function( system, options ) {
 			PS.statusText("Team Swift")
 			//Adds 2 rows to the bottom for the user interface.
 			PS.gridSize( GRIDX, GRIDY + 2 );
-
+			board.width = GRIDX;
+			board.height = GRIDY;
 
 
 			//Here the grid and backgrounds are set to green
@@ -252,14 +353,20 @@ var G = ( function () {
 
 			PS.spriteSolidColor( player.spriteId, PS.COLOR_RED);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
+			var valid = false;
+			while(!valid)
+			{
+				generateBoard();
+				let map = PS.pathMap(board);
+				let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
+				if(path.length != 0)
+				{
+					valid = true;
+				}
+			}
 
-			generateBoard();
 			//Spawns the player
 			updatePosition();
-
-
-			// Install additional initialization code
-			// here as needed
 
 			// PS.dbLogin() must be called at the END
 			// of the PS.init() event handler (as shown)
