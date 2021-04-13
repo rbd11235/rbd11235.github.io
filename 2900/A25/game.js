@@ -49,12 +49,10 @@ var G = ( function () {
 		treasureY: 0
 	};
 
-	//Color of the dirt and grass represented as RGB Triplets
-	const WATER_COLOR = PS.COLOR_BLUE;
+	//Color of the water and borders represented as RGB Triplets
+	const WATER_COLOR = (0x4B81DC);
 	const UI_BORDER = [158, 127, 41]
 	const UI_COLOR = [255,220,122];
-	// Here a counter is formed to measure the amount of times a
-	// particular bead has been touched by the player block.
 
 	//These functions are called when the UI buttons are clicked.
 	//Acts as if they pressed one of arrow keys
@@ -117,7 +115,7 @@ var G = ( function () {
 
 		//Don't place a bomb on the starting position.
 		board.data[(player.x * GRIDX) + player.y] = 1;
-		PS.color(player.x, player.y, PS.COLOR_BLUE);
+		PS.color(player.x, player.y, 0x4B81DC);
 		var valid = false;
 		while(valid == false)
 		{
@@ -128,7 +126,7 @@ var G = ( function () {
 			{
 				valid = true;
 				board.data[(goalX * GRIDX) + goalY] = 2;
-				//PS.color(goalX, goalY, PS.COLOR_YELLOW);
+				//PS.color(goalX, goalY, 0xFFC836);
 				board.treasureX = goalX;
 				board.treasureY = goalY;
 			}
@@ -144,6 +142,8 @@ var G = ( function () {
 			case 0:
 				player.gameOver = true;
 				PS.statusText("Your Ship Has Sunk");
+				PS.audioPlay( "fx_blast2" );
+
 				break;
 			case 1:
 				addReefValue(squareX, squareY)
@@ -151,6 +151,7 @@ var G = ( function () {
 			case 2:
 				player.gameOver = true;
 				PS.statusText("You Found the Treasure!");
+				PS.audioPlay( "fx_tada" );
 				break;
 		}
 	};
@@ -351,7 +352,7 @@ var G = ( function () {
 
 			// Set color to red
 
-			PS.spriteSolidColor( player.spriteId, PS.COLOR_RED);
+			PS.spriteSolidColor( player.spriteId, 0x7E4A48);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
 			var valid = false;
 			while(!valid)
@@ -516,7 +517,8 @@ var G = ( function () {
 				{
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
-						player.y = player.y - 1
+						player.y = player.y - 1;
+						PS.audioPlay( "fx_swoosh" );
 					}
 				}
 
@@ -525,6 +527,7 @@ var G = ( function () {
 				{
 					if(player.x > 0) {
 						player.x = player.x - 1;
+						PS.audioPlay( "fx_swoosh" );
 					}
 				}
 				//If right or D
@@ -533,6 +536,7 @@ var G = ( function () {
 					if(player.x < (GRIDX - 1))
 					{
 						player.x = player.x + 1;
+						PS.audioPlay( "fx_swoosh" );
 					}
 
 				}
@@ -542,6 +546,7 @@ var G = ( function () {
 					if(player.y < (GRIDY - 1))
 					{
 						player.y = player.y + 1;
+						PS.audioPlay( "fx_swoosh" );
 					}
 
 				}
