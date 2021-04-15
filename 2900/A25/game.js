@@ -144,8 +144,24 @@ var G = ( function () {
 			}
 		}
 
-		//Don't place a bomb on the starting position.
-		board.data[(player.x * GRIDX) + player.y] = 1;
+		const up = player.y - 1;
+		const midY = player.y;
+		const down = player.y + 1;
+		const left = player.x - 1;
+		const midX = player.x;
+		const right = player.x + 1;
+		//Don't place a bomb on or next to the starting position
+		board.data[(up * GRIDX) + left] = 1;
+		board.data[(up * GRIDX) + midX] = 1;
+		board.data[(up * GRIDX) + right] = 1;
+		board.data[(midY * GRIDX) + left] = 1;
+		board.data[(midY * GRIDX) + midX] = 1;
+		board.data[(midY * GRIDX) + right] = 1;
+		board.data[(down * GRIDX) + left] = 1;
+		board.data[(down * GRIDX) + midX] = 1;
+		board.data[(down * GRIDX) + right] = 1;
+
+
 		PS.color(player.x, player.y, 0x4B81DC);
 		var valid = false;
 		while(valid == false)
@@ -153,15 +169,24 @@ var G = ( function () {
 			let goalX = Math.floor(Math.random() * GRIDX);
 			let goalY = Math.floor(Math.random() * GRIDY);
 			//Don't place the goal on the player
-			if(!(goalX == player.x && goalY == player.y))
+			if(!(Math.abs(goalX - player.x) <= 1 && Math.abs(goalY - player.y) <= 1))
 			{
 				valid = true;
-				board.data[(goalX * GRIDX) + goalY] = 2;
+				board.data[(goalY * GRIDX) + goalX] = 2;
 				//PS.color(goalX, goalY, 0xFFC836);
 				board.treasureX = goalX;
 				board.treasureY = goalY;
 			}
 		}
+
+		checkSquare(left, up);
+		checkSquare(midX, up);
+		checkSquare(right, up);
+		checkSquare(left, midY);
+		checkSquare(right, midY);
+		checkSquare(left, down);
+		checkSquare(midX, down);
+		checkSquare(right, down);
 
 	};
 
@@ -188,7 +213,7 @@ var G = ( function () {
 
 	function getValue(squareX, squareY)
 	{
-		let value = board.data[(squareX * GRIDX) + squareY];
+		let value = board.data[(squareY * GRIDX) + squareX];
 		return value;
 	};
 
