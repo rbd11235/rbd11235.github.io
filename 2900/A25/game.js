@@ -97,8 +97,9 @@ var G = ( function () {
 		PS.spriteSolidAlpha(player.spriteId,255)
 		for (var a=0; a<GRIDX; a++)  {
 			for (var b=0; b<GRIDY; b++)  {
+				PS.fade(a,b, 1)
 				PS.color(a,b,WATER_COLOR)
-				PS.glyph(a,b, " ")
+				PS.glyph(a,b, "")
 			}
 		}
 
@@ -206,6 +207,7 @@ var G = ( function () {
 				PS.fade(player.x,player.y, 60,options);
 				PS.spriteMove(player.spriteId, 0,0)
 				PS.audioPlay("Sinking", {path:"./"});
+				//PS.fade(player.x, player.y, 0);
 				break;
 			case 1:
 				addReefValue(squareX, squareY)
@@ -413,6 +415,7 @@ var G = ( function () {
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
 					PS.color(a,b,WATER_COLOR)
+					PS.fade(a, b, 1);
 				}
 			}
 			PS.gridColor(WATER_COLOR)
@@ -477,7 +480,7 @@ var G = ( function () {
 		*/
 
 		touch: function( x, y, data, options ) {
-			if(y < GRIDY)
+			if(y < GRIDY && !player.gameOver)
 			{
 				let a = PS.glyph(x, y);
 				if(PS.glyph(x, y) === 182)
