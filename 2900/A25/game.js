@@ -39,6 +39,7 @@ var G = ( function () {
 	const GRIDX = 15
 	const GRIDY = 15
 
+
 	var board = {
 
 		width : 0,
@@ -87,6 +88,36 @@ var G = ( function () {
 
 	};
 
+	function resetGame()
+	{
+		PS.statusText("Team Swift")
+		player.gameOver = false;
+		player.x = GRIDX/2;
+		player.y = 1;
+		for (var a=0; a<GRIDX; a++)  {
+			for (var b=0; b<GRIDY; b++)  {
+				PS.color(a,b,WATER_COLOR)
+				PS.glyph(a,b, " ")
+			}
+		}
+
+
+		var valid = false;
+		while(!valid)
+		{
+			generateBoard();
+			let map = PS.pathMap(board);
+			let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
+			if(path.length != 0)
+			{
+				valid = true;
+			}
+		}
+
+
+		//Spawns the player
+		updatePosition();
+	}
 	//Generates a random setup.
 	function generateBoard()
 	{
@@ -143,7 +174,6 @@ var G = ( function () {
 				player.gameOver = true;
 				PS.statusText("Your Ship Has Sunk");
 				PS.audioPlay( "fx_blast2" );
-
 				break;
 			case 1:
 				addReefValue(squareX, squareY)
@@ -284,6 +314,8 @@ var G = ( function () {
 		let leftY = GRIDY + 1;
 		let rightX = (GRIDX/2) + 1;
 		let rightY = GRIDY + 1;
+		let resetX = (GRIDX/2) + 1;
+		let resetY = GRIDY;
 
 
 		let widthUp = {
@@ -306,25 +338,36 @@ var G = ( function () {
 			bottom : 5,
 			right : 5
 		}
+
+		let widthReset = {
+			top : 5,
+			left : 0,
+			bottom : 0,
+			right : 5
+		}
 		PS.glyph(upX, upY, "^");
 		PS.glyph(downX, downY, "v");
 		PS.glyph(leftX, leftY, "<");
 		PS.glyph(rightX, rightY, ">");
+		PS.glyph(resetX, resetY, "R");
 
 		PS.border(upX, upY, widthUp);
 		PS.border(downX, downY, 5);
 		PS.border(leftX, leftY, widthLeft);
 		PS.border(rightX, rightY, widthRight);
+		PS.border(resetX, resetY, widthReset);
 
 		PS.borderColor(upX, upY, UI_BORDER);
 		PS.borderColor(downX, downY, UI_BORDER);
 		PS.borderColor(leftX, leftY, UI_BORDER);
 		PS.borderColor(rightX, rightY, UI_BORDER);
+		PS.borderColor(resetX, resetY, UI_BORDER);
 
 		PS.exec(upX, upY, clickedUp)
 		PS.exec(downX, downY, clickedDown)
 		PS.exec(leftX, leftY, clickedLeft)
 		PS.exec(rightX, rightY, clickedRight)
+		PS.exec(resetX, resetY, resetGame);
 	};
 	var exports = {
 		init: function( system, options ) {
@@ -333,7 +376,6 @@ var G = ( function () {
 			PS.gridSize( GRIDX, GRIDY + 2 );
 			board.width = GRIDX;
 			board.height = GRIDY;
-
 
 			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
@@ -349,7 +391,8 @@ var G = ( function () {
 			// Use only ALPHABETIC characters
 			// No numbers, spaces or punctuation!
 			player.spriteId = PS.spriteSolid( 1, 1 );
-
+			player.x = GRIDX/2;
+			player.y = 1;
 			// Set color to red
 
 			PS.spriteSolidColor( player.spriteId, 0x7E4A48);
@@ -511,6 +554,10 @@ var G = ( function () {
 
 			//If up or W
 			//The reset of these methods behave similarly
+			if(key === 114)
+			{
+				resetGame();
+			}
 			if(!player.gameOver)
 			{
 				if(key === 1006 || key === 119)
@@ -550,9 +597,11 @@ var G = ( function () {
 					}
 
 				}
+
 				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 				updatePosition();
 			}
+
 
 
 
