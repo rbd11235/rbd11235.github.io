@@ -179,6 +179,7 @@ var G = ( function () {
 			}
 		}
 
+		//Reveals squares immediately around the player for convenience sake.
 		checkSquare(left, up);
 		checkSquare(midX, up);
 		checkSquare(right, up);
@@ -470,6 +471,18 @@ var G = ( function () {
 		*/
 
 		touch: function( x, y, data, options ) {
+			if(y < GRIDY)
+			{
+				let a = PS.glyph(x, y);
+				if(PS.glyph(x, y) === 182)
+				{
+					PS.glyph(x, y, 0);
+				}
+				else if(PS.glyph(x, y) === 0)
+				{
+					PS.glyph(x, y, 182);
+				}
+			}
 			// Uncomment the following code line
 			// to inspect x/y parameters:
 
