@@ -94,6 +94,7 @@ var G = ( function () {
 		player.gameOver = false;
 		player.x = Math.floor(GRIDX/2);
 		player.y = 1;
+		PS.spriteSolidAlpha(player.spriteId,255)
 		for (var a=0; a<GRIDX; a++)  {
 			for (var b=0; b<GRIDY; b++)  {
 				PS.color(a,b,WATER_COLOR)
@@ -199,7 +200,12 @@ var G = ( function () {
 			case 0:
 				player.gameOver = true;
 				PS.statusText("Your Ship Has Sunk");
-				PS.audioPlay( "fx_blast2" );
+				PS.spriteSolidAlpha(player.spriteId,0)
+				PS.color(player.x,player.y,0x4B81DC)
+				let options = {rgb:(0x7E4A48)}
+				PS.fade(player.x,player.y, 60,options);
+				PS.spriteMove(player.spriteId, 0,0)
+				PS.audioPlay("Sinking", {path:"./"});
 				break;
 			case 1:
 				addReefValue(squareX, squareY)
@@ -207,7 +213,7 @@ var G = ( function () {
 			case 2:
 				player.gameOver = true;
 				PS.statusText("You Found the Treasure!");
-				PS.audioPlay( "fx_tada" );
+				PS.audioPlay("Treasure", {path:"./"});
 				break;
 		}
 	};
@@ -595,6 +601,7 @@ var G = ( function () {
 			if(key === 114)
 			{
 				resetGame();
+				PS.audioPlay("Respawn", {path:"./"});
 			}
 			if(!player.gameOver)
 			{
@@ -603,7 +610,7 @@ var G = ( function () {
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
 						player.y = player.y - 1;
-						PS.audioPlay( "fx_swoosh" );
+						PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 
@@ -612,7 +619,7 @@ var G = ( function () {
 				{
 					if(player.x > 0) {
 						player.x = player.x - 1;
-						PS.audioPlay( "fx_swoosh" );
+						PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 				//If right or D
@@ -621,7 +628,7 @@ var G = ( function () {
 					if(player.x < (GRIDX - 1))
 					{
 						player.x = player.x + 1;
-						PS.audioPlay( "fx_swoosh" );
+						PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
@@ -631,7 +638,7 @@ var G = ( function () {
 					if(player.y < (GRIDY - 1))
 					{
 						player.y = player.y + 1;
-						PS.audioPlay( "fx_swoosh" );
+						PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
