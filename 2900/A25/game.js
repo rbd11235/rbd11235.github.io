@@ -78,7 +78,7 @@ var G = ( function () {
 	{
 		// Set plane to 1 (above floor)
 
-		PS.spritePlane( player.spriteId, 1 );
+		PS.spritePlane( player.spriteId, 3 );
 
 		// Position sprite at center of grid
 
@@ -210,6 +210,7 @@ var G = ( function () {
 				//PS.fade(player.x, player.y, 0);
 				break;
 			case 1:
+				PS.spriteSolidAlpha(player.spriteId,255)
 				addReefValue(squareX, squareY)
 				break;
 			case 2:
