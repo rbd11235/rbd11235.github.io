@@ -28,39 +28,32 @@ var G = ( function () {
 		spriteId: "",
 		x: 0,
 		y: 0,
+		gameOver: false,
 		//Indicates the sprite id of the box to the
 		// left, right, top, or bottom of the player
 		//An empty string means there is no box in that position.
-		toLeft: "",
-		toRight: "",
-		toUp: "",
-		toDown: "",
+
 	}
 	//Size of the grid, excluding the user interface.
 	//UI will adjust to different grid sizes, but it shouldn't be made smaller than 4x4
-	const GRIDX = 9
-	const GRIDY = 8
+	const GRIDX = 15
+	const GRIDY = 15
 
-	//Amount of different shades of grass/dirt to cycle through.
-	//If this is set to 10, it will take 10 passes of pushing the block over a square before the final color is revealed.
-	const NUM_SHADES = 10;
 
-	//Color of the dirt and grass represented as RGB Triplets
-	const DIRT_COLOR = [79,46,30];
-	const GRASS_COLOR = [37,125,34];
+	var board = {
 
-	// Here a counter is formed to measure the amount of times a
-	// particular bead has been touched by the player block.
-	const Square=[];
-	for (var a=0; a<GRIDX; a++)  {
-		for (var b=0; b<GRIDY; b++)  {
-			Square.push({positionX:a,positionY:b,Counter:0});
-		}
-	}
+		width : 0,
+		height : 0,
+		pixelSize : 1,
+		data: [],
+		treasureX: 0,
+		treasureY: 0
+	};
 
-	//Amount of boxes to spawn.
-	//Should be kept at 1 unless collisions for multiple boxes are implemented
-	const BOXES = 1
+	//Color of the water and borders represented as RGB Triplets
+	const WATER_COLOR = (0x4B81DC);
+	const UI_BORDER = [158, 127, 41]
+	const UI_COLOR = [255,220,122];
 
 	//These functions are called when the UI buttons are clicked.
 	//Acts as if they pressed one of arrow keys
@@ -80,58 +73,6 @@ var G = ( function () {
 		PS.keyDown(1008, false, false, null)
 	};
 
-
-	var distortGround = function(x, y) {
-		for(var i=0;i<Square.length;i++){
-			if (Square[i].positionX === x && Square[i].positionY === y){
-				Square[i].Counter++;
-				//Value used to calculate the proportions of colors for mixing the grass and dirt colors
-				let mixValue = 1.0 - ((1.0/NUM_SHADES) * Square[i].Counter)
-				let mixR = (GRASS_COLOR[0] * mixValue) + (DIRT_COLOR[0] * (1 - mixValue))
-				let mixG = (GRASS_COLOR[1] * mixValue) + (DIRT_COLOR[1] * (1 - mixValue))
-				let mixB = (GRASS_COLOR[2] * mixValue) + (DIRT_COLOR[2] * (1 - mixValue))
-				let groundColor = [mixR, mixG, mixB]
-				if (Square[i].Counter <= NUM_SHADES){
-					PS.color(x, y, groundColor)
-
-				}
-			}
-		}
-	}
-	//Called when the player touches another box.
-	//Updates player values to indicate there is now a box next to the player.
-	var collisionFunc = function ( s1, p1, s2, p2, type ) {
-
-		if ( type === PS.SPRITE_TOUCH ) {
-			type = " touched "
-			//Position of the player
-			var s1Pos = PS.spriteMove(s1, PS.CURRENT, PS.CURRENT);
-
-			//Position of the box it's touching
-			var s2Pos = PS.spriteMove(s2, PS.CURRENT, PS.CURRENT);
-
-			//Values used to detect box's position relative to the player
-			let diffX = s2Pos.x - s1Pos.x;
-			let diffY = s2Pos.y - s1Pos.y;
-			if(diffX == 1 && diffY == 0)
-			{
-				player.toRight = s2;
-			}
-			else if(diffX == -1 && diffY == 0)
-			{
-				player.toLeft = s2;
-			}
-			else if(diffY == 1 && diffX == 0)
-			{
-				player.toDown = s2;
-			}
-			else if(diffY == -1 && diffX == 0)
-			{
-				player.toUp = s2;
-			}
-		}
-	};
-
 	//Updates the position of the player on the grid based on the values of the player object
 	function updatePosition()
 	{
@@ -143,52 +84,235 @@ var G = ( function () {
 
 		PS.spriteMove( player.spriteId, player.x, player.y );
 
+		checkSquare(player.x, player.y);
+
 	};
 
-	//Adds the fence to the grid.
-	function addBorder()
+	function resetGame()
 	{
-		//For the top and bottom of fence
-		for(var x=2; x < (GRIDX - 2); x++)
-		{
-			let topWidth = {
-				top : 5,
-				left : 0,
-				bottom : 0,
-				right : 0
-			};
-			let bottomWidth = {
-				top : 0,
-				left : 0,
-				bottom : 5,
-				right : 0
-			};
-			PS.border(x, 1, topWidth);
-			PS.border(x, GRIDY - 2, bottomWidth);
-			PS.borderColor(x, 1, PS.COLOR_WHITE);
-			PS.borderColor(x, GRIDY - 2, PS.COLOR_WHITE);
+		PS.statusText("Team Swift")
+		player.gameOver = false;
+		player.x = Math.floor(GRIDX/2);
+		player.y = 1;
+		PS.spriteSolidAlpha(player.spriteId,255)
+		for (var a=0; a<GRIDX; a++)  {
+			for (var b=0; b<GRIDY; b++)  {
+				PS.color(a,b,WATER_COLOR)
+				PS.glyph(a,b, " ")
+			}
 		}
 
-		//For the left and right of fence
-		for(var y=2; y < (GRIDY - 2); y++)
+
+		var valid = false;
+		while(!valid)
 		{
-			let leftWidth = {
-				top : 0,
-				left : 5,
-				bottom : 0,
-				right : 0
-			};
-			let rightWidth = {
-				top : 0,
-				left : 0,
-				bottom : 0,
-				right : 5
-			};
-			PS.border(1, y, leftWidth);
-			PS.border(GRIDX - 2, y, rightWidth);
-			PS.borderColor(1, y, PS.COLOR_WHITE);
-			PS.borderColor(GRIDX - 2, y, PS.COLOR_WHITE);
+			generateBoard();
+			let map = PS.pathMap(board);
+			let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
+			if(path.length != 0)
+			{
+				valid = true;
+			}
 		}
+
+
+		//Spawns the player
+		updatePosition();
+	}
+	//Generates a random setup.
+	function generateBoard()
+	{
+		board.data = [];
+		for(var y=0; y < GRIDY; y++)
+		{
+			//PS.color(PS.ALL, y, WATER_COLOR)
+		}
+		for(var x=0; x < GRIDX; x++)
+		{
+			for(var y=0; y < GRIDY; y++)
+			{
+				//Lower the value of the number here to increase the amount of reefs.
+				let a = Math.floor(Math.random() * 4);
+				if(a === 0)
+				{
+					board.data.push(0);
+					//PS.color(x, y, PS.COLOR_ORANGE);
+				}
+				else
+				{
+					board.data.push(1);
+				}
+			}
+		}
+
+		const up = player.y - 1;
+		const midY = player.y;
+		const down = player.y + 1;
+		const left = player.x - 1;
+		const midX = player.x;
+		const right = player.x + 1;
+		//Don't place a bomb on or next to the starting position
+		board.data[(up * GRIDX) + left] = 1;
+		board.data[(up * GRIDX) + midX] = 1;
+		board.data[(up * GRIDX) + right] = 1;
+		board.data[(midY * GRIDX) + left] = 1;
+		board.data[(midY * GRIDX) + midX] = 1;
+		board.data[(midY * GRIDX) + right] = 1;
+		board.data[(down * GRIDX) + left] = 1;
+		board.data[(down * GRIDX) + midX] = 1;
+		board.data[(down * GRIDX) + right] = 1;
+
+
+		PS.color(player.x, player.y, 0x4B81DC);
+		var valid = false;
+		while(valid == false)
+		{
+			let goalX = Math.floor(Math.random() * GRIDX);
+			let goalY = Math.floor(Math.random() * GRIDY);
+			//Don't place the goal on the player
+			if(!(Math.abs(goalX - player.x) <= 1 && Math.abs(goalY - player.y) <= 1))
+			{
+				valid = true;
+				board.data[(goalY * GRIDX) + goalX] = 2;
+				//PS.color(goalX, goalY, 0xFFC836);
+				board.treasureX = goalX;
+				board.treasureY = goalY;
+			}
+		}
+
+		//Reveals squares immediately around the player for convenience sake.
+		checkSquare(left, up);
+		checkSquare(midX, up);
+		checkSquare(right, up);
+		checkSquare(left, midY);
+		checkSquare(right, midY);
+		checkSquare(left, down);
+		checkSquare(midX, down);
+		checkSquare(right, down);
+
+	};
+
+	function checkSquare(squareX, squareY)
+	{
+
+		switch(getValue(squareX, squareY))
+		{
+			case 0:
+				player.gameOver = true;
+				PS.statusText("Your Ship Has Sunk");
+				PS.spriteSolidAlpha(player.spriteId,0)
+				PS.color(player.x,player.y,0x4B81DC)
+				let options = {rgb:(0x7E4A48)}
+				PS.fade(player.x,player.y, 60, options);
+				PS.spriteMove(player.spriteId, 0,0)
+				PS.audioPlay("Sinking", {path:"./"});
+				break;
+			case 1:
+				addReefValue(squareX, squareY)
+				break;
+			case 2:
+				player.gameOver = true;
+				PS.statusText("You Found the Treasure!");
+				PS.audioPlay("Treasure", {path:"./"});
+				break;
+		}
+	};
+
+	function getValue(squareX, squareY)
+	{
+		let value = board.data[(squareY * GRIDX) + squareX];
+		return value;
+	};
+
+
+	function addReefValue(squareX, squareY)
+	{
+		var reefCounter = 0;
+		let checkUp = squareY > 0;
+		let checkRight = squareX < (GRIDX - 1);
+		let checkLeft = squareX > 0;
+		let checkDown = squareY < (GRIDY - 1);
+
+		if(checkUp && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp)
+		{
+			let v = getValue(squareX, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkRight)
+		{
+			let v = getValue(squareX + 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown)
+		{
+			let v = getValue(squareX, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		//Unicode characters for numbers start at 48.
+		PS.glyph(squareX, squareY, 48 + reefCounter);
+	};
+
+	//Creates the user interface and hooks up the buttons to the click methods
+	//Will center the UI horizontally based on the grid size
+	function addUI()
+	{
 
 		//For the border separating the game and the user interface
 		for(var x=0; x < GRIDX; x++)
@@ -200,54 +324,20 @@ var G = ( function () {
 				right : 0
 			};
 			PS.border(x, GRIDY, width);
-			PS.borderColor(x, GRIDY, PS.COLOR_BLACK)
-			//PS.border(x, )
+			PS.borderColor(x, GRIDY, UI_BORDER)
 		}
 
-		//For the corners of the fence
-		let corner1 = {
-			top : 5,
-			left : 5,
-			bottom : 0,
-			right : 0
+		for(var x=0; x < GRIDX; x++)
+		{
+			for(var y=0; y < GRIDY; y++)
+			{
+				board.data.push(0)
+			}
 		}
 
-		let corner2 = {
-			top : 5,
-			left : 0,
-			bottom : 0,
-			right : 5
-		}
+		PS.color(PS.ALL, GRIDY, UI_COLOR)
+		PS.color(PS.ALL, GRIDY + 1, UI_COLOR)
 
-		let corner3 = {
-			top : 0,
-			left : 0,
-			bottom : 5,
-			right : 5
-		}
-
-		let corner4 = {
-			top : 0,
-			left : 5,
-			bottom : 5,
-			right : 0
-		}
-
-		PS.border(1, 1, corner1);
-		PS.border(GRIDX - 2, 1, corner2);
-		PS.border(GRIDX - 2, GRIDY - 2, corner3);
-		PS.border(1, GRIDY - 2, corner4);
-
-		PS.borderColor(1, 1, PS.COLOR_WHITE);
-		PS.borderColor(GRIDX - 2, 1, PS.COLOR_WHITE);
-		PS.borderColor(GRIDX - 2, GRIDY - 2, PS.COLOR_WHITE);
-		PS.borderColor(1, GRIDY - 2, PS.COLOR_WHITE);
-	}
-
-	//Creates the user interface and hooks up the buttons to the click methods
-	//Will center the UI horizontally based on the grid size
-	function addUI()
-	{
 		let upX = GRIDX/2;
 		let upY = GRIDY;
 		let downX = GRIDX/2;
@@ -256,6 +346,8 @@ var G = ( function () {
 		let leftY = GRIDY + 1;
 		let rightX = (GRIDX/2) + 1;
 		let rightY = GRIDY + 1;
+		let resetX = (GRIDX/2) + 1;
+		let resetY = GRIDY;
 
 
 		let widthUp = {
@@ -278,79 +370,91 @@ var G = ( function () {
 			bottom : 5,
 			right : 5
 		}
+
+		let widthReset = {
+			top : 5,
+			left : 0,
+			bottom : 0,
+			right : 5
+		}
 		PS.glyph(upX, upY, "^");
 		PS.glyph(downX, downY, "v");
 		PS.glyph(leftX, leftY, "<");
 		PS.glyph(rightX, rightY, ">");
+		PS.glyph(resetX, resetY, "R");
 
 		PS.border(upX, upY, widthUp);
 		PS.border(downX, downY, 5);
 		PS.border(leftX, leftY, widthLeft);
 		PS.border(rightX, rightY, widthRight);
+		PS.border(resetX, resetY, widthReset);
 
-		PS.borderColor(upX, upY, PS.COLOR_BLACK);
-		PS.borderColor(downX, downY, PS.COLOR_BLACK);
-		PS.borderColor(leftX, leftY, PS.COLOR_BLACK);
-		PS.borderColor(rightX, rightY, PS.COLOR_BLACK);
+		PS.borderColor(upX, upY, UI_BORDER);
+		PS.borderColor(downX, downY, UI_BORDER);
+		PS.borderColor(leftX, leftY, UI_BORDER);
+		PS.borderColor(rightX, rightY, UI_BORDER);
+		PS.borderColor(resetX, resetY, UI_BORDER);
+
 		PS.exec(upX, upY, clickedUp)
 		PS.exec(downX, downY, clickedDown)
 		PS.exec(leftX, leftY, clickedLeft)
 		PS.exec(rightX, rightY, clickedRight)
-	}
+		PS.exec(resetX, resetY, resetGame);
+	};
 	var exports = {
 		init: function( system, options ) {
 			PS.statusText("Team Swift")
 			//Adds 2 rows to the bottom for the user interface.
 			PS.gridSize( GRIDX, GRIDY + 2 );
+			board.width = GRIDX;
+			board.height = GRIDY;
+
 			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
-					PS.color(a,b,GRASS_COLOR)
+					PS.color(a,b,WATER_COLOR)
 				}
 			}
-			PS.gridColor(GRASS_COLOR)
+			PS.gridColor(WATER_COLOR)
 			PS.border(PS.ALL, PS.ALL, 0)
 
-
-			addBorder();
 			addUI();
 			// Change this string to your team name
 			// Use only ALPHABETIC characters
 			// No numbers, spaces or punctuation!
 			player.spriteId = PS.spriteSolid( 1, 1 );
-
+			player.x = Math.floor(GRIDX/2);
+			player.y = 1;
 			// Set color to red
 
-			PS.spriteSolidColor( player.spriteId, PS.COLOR_RED );
-			PS.spriteCollide(player.spriteId, collisionFunc)
-
-			const TEAM = "TeamSwift";
-
-
-			//Spawns boxes in a diagonal line.
-			for(var i=0; i < BOXES; i++)
+			PS.spriteSolidColor( player.spriteId, 0x7E4A48);
+			//PS.spriteCollide(player.spriteId, collisionFunc)
+			var valid = false;
+			while(!valid)
 			{
-				var block =
-					{
-						sprite: PS.spriteSolid(1, 1),
-						x: (1 + i),
-						y: (1 + i)
-					}
-				PS.spriteSolidColor( block.sprite, PS.COLOR_BLACK);
-				PS.spritePlane( block.sprite, 1 );
-				PS.spriteMove(block.sprite, block.x, block.y);
+				generateBoard();
+				let map = PS.pathMap(board);
+				let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
+				if(path.length != 0)
+				{
+					valid = true;
+				}
 			}
+
 			//Spawns the player
 			updatePosition();
-
-
-			// Install additional initialization code
-			// here as needed
 
 			// PS.dbLogin() must be called at the END
 			// of the PS.init() event handler (as shown)
 			// DO NOT MODIFY THIS FUNCTION CALL
 			// except as instructed
+
+			const TEAM = "TeamSwift";
+
+			// This code should be the last thing
+			// called by your PS.init() handler.
+			// DO NOT MODIFY IT, except for the change
+			// explained in the comment below.
 
 			PS.dbLogin( "imgd2900", TEAM, function ( id, user ) {
 				if ( user === PS.ERROR ) {
@@ -359,6 +463,7 @@ var G = ( function () {
 				PS.dbEvent( TEAM, "startup", user );
 				PS.dbSend( TEAM, PS.CURRENT, { discard : true } );
 			}, { active : true } );
+
 		},
 
 		/*
@@ -372,6 +477,18 @@ var G = ( function () {
 		*/
 
 		touch: function( x, y, data, options ) {
+			if(y < GRIDY)
+			{
+				let a = PS.glyph(x, y);
+				if(PS.glyph(x, y) === 182)
+				{
+					PS.glyph(x, y, 0);
+				}
+				else if(PS.glyph(x, y) === 0)
+				{
+					PS.glyph(x, y, 182);
+				}
+			}
 			// Uncomment the following code line
 			// to inspect x/y parameters:
 
@@ -478,149 +595,58 @@ var G = ( function () {
 
 			//Marker is used to determine whether to reset the variables that tell the player they're next to a box
 			//The only time you don't want to reset them is if the player didn't move
-			var didMove = true;
 
 			//If up or W
 			//The reset of these methods behave similarly
-			if(key === 1006 || key === 119)
+			if(key === 114)
 			{
-				//If they're not trying to move offscreen
-				if(player.y > 0) {
-					//If there is a box above them
-					if(player.toUp !== "")
-					{
-						//If they're trying to push the box out of the fence
-						if(player.y == 2)
-						{
-							didMove = false;
-						}
-						//If the box is movable, move the player and box. Play sound effect
-						else
-						{
-							player.y = player.y - 1
-							var boxPos = PS.spriteMove(player.toUp, PS.CURRENT, PS.CURRENT);
-							distortGround(boxPos.x, boxPos.y);
-							PS.spriteMove(player.toUp, boxPos.x, boxPos.y - 1);
-							PS.spriteShow(player.toUp)
-							// Here it is determined if a square has been touched by the player bead more than 5 times
-							// and if so it sets the square color to brown
-
-							PS.audioPlay("Pushing", {path:"./"});
-
-						}
-
-					}
-					else
-					{
-						player.y = player.y - 1
-					}
-				}
+				resetGame();
 			}
-
-			//If left or A
-			else if(key === 1005 || key === 97)
+			if(!player.gameOver)
 			{
-				if(player.x > 0) {
-					if(player.toLeft !== "")
-					{
-						if(player.x == 2)
-						{
-							didMove = false;
-						}
-						else
-						{
-							player.x = player.x - 1;
-							var boxPos = PS.spriteMove(player.toLeft, PS.CURRENT, PS.CURRENT);
-							distortGround(boxPos.x, boxPos.y);
-							PS.spriteMove(player.toLeft, boxPos.x - 1, boxPos.y);
-							PS.spriteShow(player.toLeft)
-							PS.audioPlay("Pushing", {path:"./"});
-						}
-
-					}
-					else
-					{
-						player.x = player.x - 1;
-					}
-				}
-			}
-			//If right or D
-			else if(key === 1007 || key === 100)
-			{
-				if(player.x < (GRIDX - 1))
+				if(key === 1006 || key === 119)
 				{
-
-					if(player.toRight !== "")
-					{
-						if(player.x == (GRIDX - 3))
-						{
-							didMove = false;
-						}
-						else
-						{
-							player.x = player.x + 1;
-							var boxPos = PS.spriteMove(player.toRight, PS.CURRENT, PS.CURRENT);
-							distortGround(boxPos.x, boxPos.y);
-							PS.spriteMove(player.toRight, boxPos.x + 1, boxPos.y);
-							PS.spriteShow(player.toRight)
-							PS.audioPlay("Pushing", {path:"./"});
-						}
-
+					//If they're not trying to move offscreen
+					if(player.y > 0) {
+						player.y = player.y - 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
-					else
+				}
+
+				//If left or A
+				else if(key === 1005 || key === 97)
+				{
+					if(player.x > 0) {
+						player.x = player.x - 1;
+						PS.audioPlay("Moving", {path:"./"});
+					}
+				}
+				//If right or D
+				else if(key === 1007 || key === 100)
+				{
+					if(player.x < (GRIDX - 1))
 					{
 						player.x = player.x + 1;
-					}
+						PS.audioPlay("Moving", {path:"./"});
+
 				}
-
-			}
-			//If down or S
-			else if(key === 1008 || key === 115)
-			{
-				if(player.y < (GRIDY - 1))
+				//If down or S
+				else if(key === 1008 || key === 115)
 				{
-
-					if(player.toDown !== "")
-					{
-						if(player.y == (GRIDY - 3))
-						{
-							didMove = false;
-						}
-						else
-						{
-							player.y = player.y + 1;
-							var boxPos = PS.spriteMove(player.toDown, PS.CURRENT, PS.CURRENT);
-							distortGround(boxPos.x, boxPos.y);
-							PS.spriteMove(player.toDown, boxPos.x, boxPos.y + 1);
-							PS.spriteShow(player.toDown)
-							PS.audioPlay("Pushing", {path:"./"});
-						}
-					}
-					else
+					if(player.y < (GRIDY - 1))
 					{
 						player.y = player.y + 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
+
 				}
 
+				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
+				updatePosition();
 			}
-			//Reset collision data
-			if(didMove)
-			{
-				player.toDown = "";
-				player.toUp = "";
-				player.toLeft = "";
-				player.toRight = "";
-			}
-			//If trying to push box outside the fence, play sound effect
-			else
-			{
-				PS.audioPlay("Hitting", {path:"./"});
-			}
-if (didMove){
-	PS.audioPlay("Stepping", {path:"./"});
-}
-			//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
-			updatePosition();
+
+
+
 
 		},
 		/*
@@ -700,4 +726,3 @@ PS.keyUp = G.keyUp;
 PS.input = G.input;
 
 PS.shutdown = G.shutdown;
-
