@@ -39,6 +39,7 @@ var G = ( function () {
 	const GRIDX = 15
 	const GRIDY = 15
 
+
 	var board = {
 
 		width : 0,
@@ -49,12 +50,10 @@ var G = ( function () {
 		treasureY: 0
 	};
 
-	//Color of the dirt and grass represented as RGB Triplets
-	const WATER_COLOR = PS.COLOR_BLUE;
+	//Color of the water and borders represented as RGB Triplets
+	const WATER_COLOR = (0x4B81DC);
 	const UI_BORDER = [158, 127, 41]
 	const UI_COLOR = [255,220,122];
-	// Here a counter is formed to measure the amount of times a
-	// particular bead has been touched by the player block.
 
 	//These functions are called when the UI buttons are clicked.
 	//Acts as if they pressed one of arrow keys
@@ -79,7 +78,7 @@ var G = ( function () {
 	{
 		// Set plane to 1 (above floor)
 
-		PS.spritePlane( player.spriteId, 1 );
+		PS.spritePlane( player.spriteId, 3 );
 
 		// Position sprite at center of grid
 
@@ -89,6 +88,38 @@ var G = ( function () {
 
 	};
 
+	function resetGame()
+	{
+		PS.statusText("Team Swift")
+		player.gameOver = false;
+		player.x = Math.floor(GRIDX/2);
+		player.y = 1;
+		PS.spriteSolidAlpha(player.spriteId,255)
+		for (var a=0; a<GRIDX; a++)  {
+			for (var b=0; b<GRIDY; b++)  {
+				PS.fade(a,b, 1)
+				PS.color(a,b,WATER_COLOR)
+				PS.glyph(a,b, "")
+			}
+		}
+
+
+		var valid = false;
+		while(!valid)
+		{
+			generateBoard();
+			let map = PS.pathMap(board);
+			let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
+			if(path.length != 0)
+			{
+				valid = true;
+			}
+		}
+
+
+		//Spawns the player
+		updatePosition();
+	}
 	//Generates a random setup.
 	function generateBoard()
 	{
@@ -115,24 +146,50 @@ var G = ( function () {
 			}
 		}
 
-		//Don't place a bomb on the starting position.
-		board.data[(player.x * GRIDX) + player.y] = 1;
-		PS.color(player.x, player.y, PS.COLOR_BLUE);
+		const up = player.y - 1;
+		const midY = player.y;
+		const down = player.y + 1;
+		const left = player.x - 1;
+		const midX = player.x;
+		const right = player.x + 1;
+		//Don't place a bomb on or next to the starting position
+		board.data[(up * GRIDX) + left] = 1;
+		board.data[(up * GRIDX) + midX] = 1;
+		board.data[(up * GRIDX) + right] = 1;
+		board.data[(midY * GRIDX) + left] = 1;
+		board.data[(midY * GRIDX) + midX] = 1;
+		board.data[(midY * GRIDX) + right] = 1;
+		board.data[(down * GRIDX) + left] = 1;
+		board.data[(down * GRIDX) + midX] = 1;
+		board.data[(down * GRIDX) + right] = 1;
+
+
+		PS.color(player.x, player.y, 0x4B81DC);
 		var valid = false;
 		while(valid == false)
 		{
 			let goalX = Math.floor(Math.random() * GRIDX);
 			let goalY = Math.floor(Math.random() * GRIDY);
 			//Don't place the goal on the player
-			if(!(goalX == player.x && goalY == player.y))
+			if(!(Math.abs(goalX - player.x) <= 1 && Math.abs(goalY - player.y) <= 1))
 			{
 				valid = true;
-				board.data[(goalX * GRIDX) + goalY] = 2;
-				//PS.color(goalX, goalY, PS.COLOR_YELLOW);
+				board.data[(goalY * GRIDX) + goalX] = 2;
+				//PS.color(goalX, goalY, 0xFFC836);
 				board.treasureX = goalX;
 				board.treasureY = goalY;
 			}
 		}
+
+		//Reveals squares immediately around the player for convenience sake.
+		checkSquare(left, up);
+		checkSquare(midX, up);
+		checkSquare(right, up);
+		checkSquare(left, midY);
+		checkSquare(right, midY);
+		checkSquare(left, down);
+		checkSquare(midX, down);
+		checkSquare(right, down);
 
 	};
 
@@ -144,20 +201,29 @@ var G = ( function () {
 			case 0:
 				player.gameOver = true;
 				PS.statusText("Your Ship Has Sunk");
+				PS.spriteSolidAlpha(player.spriteId,0)
+				PS.color(player.x,player.y,0x4B81DC)
+				let options = {rgb:(0x7E4A48)}
+				PS.fade(player.x,player.y, 60,options);
+				PS.spriteMove(player.spriteId, 0,0)
+				PS.audioPlay("Sinking", {path:"./"});
+				//PS.fade(player.x, player.y, 0);
 				break;
 			case 1:
+				PS.spriteSolidAlpha(player.spriteId,255)
 				addReefValue(squareX, squareY)
 				break;
 			case 2:
 				player.gameOver = true;
 				PS.statusText("You Found the Treasure!");
+				PS.audioPlay("Treasure", {path:"./"});
 				break;
 		}
 	};
 
 	function getValue(squareX, squareY)
 	{
-		let value = board.data[(squareX * GRIDX) + squareY];
+		let value = board.data[(squareY * GRIDX) + squareX];
 		return value;
 	};
 
@@ -283,6 +349,8 @@ var G = ( function () {
 		let leftY = GRIDY + 1;
 		let rightX = (GRIDX/2) + 1;
 		let rightY = GRIDY + 1;
+		let resetX = (GRIDX/2) + 1;
+		let resetY = GRIDY;
 
 
 		let widthUp = {
@@ -305,25 +373,36 @@ var G = ( function () {
 			bottom : 5,
 			right : 5
 		}
+
+		let widthReset = {
+			top : 5,
+			left : 0,
+			bottom : 0,
+			right : 5
+		}
 		PS.glyph(upX, upY, "^");
 		PS.glyph(downX, downY, "v");
 		PS.glyph(leftX, leftY, "<");
 		PS.glyph(rightX, rightY, ">");
+		PS.glyph(resetX, resetY, "R");
 
 		PS.border(upX, upY, widthUp);
 		PS.border(downX, downY, 5);
 		PS.border(leftX, leftY, widthLeft);
 		PS.border(rightX, rightY, widthRight);
+		PS.border(resetX, resetY, widthReset);
 
 		PS.borderColor(upX, upY, UI_BORDER);
 		PS.borderColor(downX, downY, UI_BORDER);
 		PS.borderColor(leftX, leftY, UI_BORDER);
 		PS.borderColor(rightX, rightY, UI_BORDER);
+		PS.borderColor(resetX, resetY, UI_BORDER);
 
 		PS.exec(upX, upY, clickedUp)
 		PS.exec(downX, downY, clickedDown)
 		PS.exec(leftX, leftY, clickedLeft)
 		PS.exec(rightX, rightY, clickedRight)
+		PS.exec(resetX, resetY, resetGame);
 	};
 	var exports = {
 		init: function( system, options ) {
@@ -333,11 +412,11 @@ var G = ( function () {
 			board.width = GRIDX;
 			board.height = GRIDY;
 
-
 			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
 					PS.color(a,b,WATER_COLOR)
+					PS.fade(a, b, 1);
 				}
 			}
 			PS.gridColor(WATER_COLOR)
@@ -348,10 +427,11 @@ var G = ( function () {
 			// Use only ALPHABETIC characters
 			// No numbers, spaces or punctuation!
 			player.spriteId = PS.spriteSolid( 1, 1 );
-
+			player.x = Math.floor(GRIDX/2);
+			player.y = 1;
 			// Set color to red
 
-			PS.spriteSolidColor( player.spriteId, PS.COLOR_RED);
+			PS.spriteSolidColor( player.spriteId, 0x7E4A48);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
 			var valid = false;
 			while(!valid)
@@ -401,6 +481,18 @@ var G = ( function () {
 		*/
 
 		touch: function( x, y, data, options ) {
+			if(y < GRIDY && !player.gameOver)
+			{
+				let a = PS.glyph(x, y);
+				if(PS.glyph(x, y) === 182)
+				{
+					PS.glyph(x, y, 0);
+				}
+				else if(PS.glyph(x, y) === 0)
+				{
+					PS.glyph(x, y, 182);
+				}
+			}
 			// Uncomment the following code line
 			// to inspect x/y parameters:
 
@@ -510,13 +602,19 @@ var G = ( function () {
 
 			//If up or W
 			//The reset of these methods behave similarly
+			if(key === 114)
+			{
+				resetGame();
+				PS.audioPlay("Respawn", {path:"./"});
+			}
 			if(!player.gameOver)
 			{
 				if(key === 1006 || key === 119)
 				{
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
-						player.y = player.y - 1
+						player.y = player.y - 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 
@@ -525,6 +623,7 @@ var G = ( function () {
 				{
 					if(player.x > 0) {
 						player.x = player.x - 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 				//If right or D
@@ -533,6 +632,7 @@ var G = ( function () {
 					if(player.x < (GRIDX - 1))
 					{
 						player.x = player.x + 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
@@ -542,12 +642,15 @@ var G = ( function () {
 					if(player.y < (GRIDY - 1))
 					{
 						player.y = player.y + 1;
+						PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
+
 				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 				updatePosition();
 			}
+
 
 
 
