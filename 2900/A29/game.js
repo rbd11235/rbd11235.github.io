@@ -46,6 +46,7 @@ var G = ( function () {
 		height : 0,
 		pixelSize : 1,
 		data: [],
+		reefData: [],
 		treasureX: 0,
 		treasureY: 0
 	};
@@ -84,6 +85,7 @@ var G = ( function () {
 
 		PS.spriteMove( player.spriteId, player.x, player.y );
 
+		PS.spritePlane( player.spriteId, 0 );
 		checkSquare(player.x, player.y);
 
 	};
@@ -124,6 +126,7 @@ var G = ( function () {
 	function generateBoard()
 	{
 		board.data = [];
+		board.reefData = [];
 		for(var y=0; y < GRIDY; y++)
 		{
 			//PS.color(PS.ALL, y, WATER_COLOR)
@@ -165,6 +168,7 @@ var G = ( function () {
 
 
 		PS.color(player.x, player.y, 0x4B81DC);
+
 		var valid = false;
 		while(valid == false)
 		{
@@ -181,17 +185,13 @@ var G = ( function () {
 			}
 		}
 
-		//Reveals squares immediately around the player for convenience sake.
-		checkSquare(left, up);
-		checkSquare(midX, up);
-		checkSquare(right, up);
-		checkSquare(left, midY);
-		checkSquare(right, midY);
-		checkSquare(left, down);
-		checkSquare(midX, down);
-		checkSquare(right, down);
 
-	};
+	}
+
+	function validTreasure(squareX, squareY)
+	{
+
+	}
 
 	function checkSquare(squareX, squareY)
 	{
@@ -211,10 +211,14 @@ var G = ( function () {
 				break;
 			case 1:
 				PS.spriteSolidAlpha(player.spriteId,255)
-				addReefValue(squareX, squareY)
+				if(PS.glyph(squareX, squareY) == "")
+				{
+					addReefValue(squareX, squareY)
+				}
 				break;
 			case 2:
 				player.gameOver = true;
+				PS.color(squareX, squareY, PS.COLOR_YELLOW)
 				PS.statusText("You Found the Treasure!");
 				PS.audioPlay("Treasure", {path:"./"});
 				break;
@@ -227,6 +231,89 @@ var G = ( function () {
 		return value;
 	};
 
+	function generateReefValue(squareX, squareY)
+	{
+		var reefCounter = 0;
+		let checkUp = squareY > 0;
+		let checkRight = squareX < (GRIDX - 1);
+		let checkLeft = squareX > 0;
+		let checkDown = squareY < (GRIDY - 1);
+
+		if(checkUp && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp)
+		{
+			let v = getValue(squareX, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkUp && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY - 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkRight)
+		{
+			let v = getValue(squareX + 1, squareY);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkLeft)
+		{
+			let v = getValue(squareX - 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown)
+		{
+			let v = getValue(squareX, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		if(checkDown && checkRight)
+		{
+			let v = getValue(squareX + 1, squareY + 1);
+			if(v === 0)
+			{
+				reefCounter += 1;
+			}
+		}
+
+		//Unicode characters for numbers start at 48.
+		board.reefData.push(reefCounter);
+	}
 
 	function addReefValue(squareX, squareY)
 	{
@@ -310,6 +397,49 @@ var G = ( function () {
 
 		//Unicode characters for numbers start at 48.
 		PS.glyph(squareX, squareY, 48 + reefCounter);
+
+		if(PS.glyph(squareX, squareY) == 48)
+		{
+			if(checkUp && checkLeft)
+			{
+				checkSquare(squareX - 1, squareY - 1);
+			}
+
+			if(checkUp)
+			{
+				checkSquare(squareX, squareY - 1);
+			}
+
+			if(checkUp && checkRight)
+			{
+				checkSquare(squareX + 1, squareY - 1);
+			}
+
+			if(checkLeft)
+			{
+				checkSquare(squareX - 1, squareY);
+			}
+
+			if(checkRight)
+			{
+				checkSquare(squareX + 1, squareY);
+			}
+
+			if(checkDown && checkLeft)
+			{
+				checkSquare(squareX - 1, squareY + 1);
+			}
+
+			if(checkDown)
+			{
+				checkSquare(squareX, squareY + 1);
+			}
+
+			if(checkDown && checkRight)
+			{
+				checkSquare(squareX + 1, squareY + 1);
+			}
+		}
 	};
 
 	//Creates the user interface and hooks up the buttons to the click methods
@@ -404,6 +534,7 @@ var G = ( function () {
 		PS.exec(rightX, rightY, clickedRight)
 		PS.exec(resetX, resetY, resetGame);
 	};
+
 	var exports = {
 		init: function( system, options ) {
 			PS.statusText("Team Swift")
