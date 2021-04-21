@@ -181,7 +181,7 @@ var G = ( function () {
 			let goalX = Math.floor(Math.random() * GRIDX);
 			let goalY = Math.floor(Math.random() * GRIDY);
 			//Don't place the goal on the player
-			if(!(Math.abs(goalX - player.x) <= 1 && Math.abs(goalY - player.y) <= 1))
+			if(validTreasure(goalX, goalY))
 			{
 				valid = true;
 				board.data[(goalY * GRIDX) + goalX] = 2;
@@ -229,6 +229,12 @@ var G = ( function () {
 	function getValue(squareX, squareY)
 	{
 		let value = board.data[(squareY * GRIDX) + squareX];
+		return value;
+	};
+
+	function getReefs(squareX, squareY)
+	{
+		let value = board.reefData[(squareY * GRIDX) + squareX];
 		return value;
 	};
 
@@ -313,89 +319,23 @@ var G = ( function () {
 		}
 
 		//Unicode characters for numbers start at 48.
-
-		board.reefData.push(reefCounter);
+		if(getValue(squareX, squareY) === 0)
+		{
+			board.reefData.push(9);
+		}
+		else
+		{
+			board.reefData.push(reefCounter);
+		}
+		//board.reefData.push(reefCounter);
 	}
 
 	function addReefValue(squareX, squareY)
 	{
-		var reefCounter = 0;
 		let checkUp = squareY > 0;
 		let checkRight = squareX < (GRIDX - 1);
 		let checkLeft = squareX > 0;
 		let checkDown = squareY < (GRIDY - 1);
-
-		if(checkUp && checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkUp)
-		{
-			let v = getValue(squareX, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkUp && checkRight)
-		{
-			let v = getValue(squareX + 1, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkRight)
-		{
-			let v = getValue(squareX + 1, squareY);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown && checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown)
-		{
-			let v = getValue(squareX, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown && checkRight)
-		{
-			let v = getValue(squareX + 1, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
 
 		//Unicode characters for numbers start at 48.
 		PS.glyph(squareX, squareY, 48 + board.reefData[(squareY * GRIDX) + squareX]);
@@ -444,6 +384,99 @@ var G = ( function () {
 			}
 		}
 	};
+
+	function validTreasure(squareX, squareY)
+	{
+		let checkUp = squareY > 0;
+		let checkRight = squareX < (GRIDX - 1);
+		let checkLeft = squareX > 0;
+		let checkDown = squareY < (GRIDY - 1);
+
+		if(checkUp && checkLeft)
+		{
+			let v = getReefs(squareX - 1, squareY - 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkUp)
+		{
+			let v = getReefs(squareX, squareY - 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkUp && checkRight)
+		{
+			let v = getReefs(squareX + 1, squareY - 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkLeft)
+		{
+			let v = getReefs(squareX - 1, squareY);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkRight)
+		{
+			let v = getReefs(squareX + 1, squareY);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkDown && checkLeft)
+		{
+			let v = getReefs(squareX - 1, squareY + 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkDown)
+		{
+			let v = getReefs(squareX, squareY + 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		if(checkDown && checkRight)
+		{
+			let v = getReefs(squareX + 1, squareY + 1);
+			if(v === 0)
+			{
+				return false;
+			}
+		}
+
+		//Don't place treasure on reef or else the board data will be wrong
+		let v = getReefs(squareX, squareY)
+		{
+			if(v === 0 || v === 9)
+			{
+				return false;
+			}
+		}
+		return true;
+
+		//
+	}
+
 
 	//Creates the user interface and hooks up the buttons to the click methods
 	//Will center the UI horizontally based on the grid size
