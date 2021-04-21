@@ -131,9 +131,9 @@ var G = ( function () {
 		{
 			//PS.color(PS.ALL, y, WATER_COLOR)
 		}
-		for(var x=0; x < GRIDX; x++)
+		for(var y=0; y < GRIDY; y++)
 		{
-			for(var y=0; y < GRIDY; y++)
+			for(var x=0; x < GRIDX; x++)
 			{
 				//Lower the value of the number here to increase the amount of reefs.
 				let a = Math.floor(Math.random() * 4);
@@ -166,7 +166,13 @@ var G = ( function () {
 		board.data[(down * GRIDX) + midX] = 1;
 		board.data[(down * GRIDX) + right] = 1;
 
-
+		for(var y=0; y < GRIDY; y++)
+		{
+			for(var x=0; x < GRIDX; x++)
+			{
+				generateReefValue(x, y);
+			}
+		}
 		PS.color(player.x, player.y, 0x4B81DC);
 
 		var valid = false;
@@ -185,11 +191,6 @@ var G = ( function () {
 			}
 		}
 
-
-	}
-
-	function validTreasure(squareX, squareY)
-	{
 
 	}
 
@@ -312,6 +313,7 @@ var G = ( function () {
 		}
 
 		//Unicode characters for numbers start at 48.
+
 		board.reefData.push(reefCounter);
 	}
 
@@ -396,7 +398,8 @@ var G = ( function () {
 		}
 
 		//Unicode characters for numbers start at 48.
-		PS.glyph(squareX, squareY, 48 + reefCounter);
+		PS.glyph(squareX, squareY, 48 + board.reefData[(squareY * GRIDX) + squareX]);
+		//console.log(board.reefData[(squareY * GRIDX) + squareX])
 
 		if(PS.glyph(squareX, squareY) == 48)
 		{
