@@ -1,3 +1,4 @@
+
 /*
 game.js for Perlenspiel 3.3.x
 Last revision: 2021-03-24 (BM)
@@ -316,6 +317,7 @@ var G = ( function () {
 			{
 				reefCounter += 1;
 			}
+
 		}
 
 		//Unicode characters for numbers start at 48.
@@ -326,6 +328,7 @@ var G = ( function () {
 		else
 		{
 			board.reefData.push(reefCounter);
+
 		}
 		//board.reefData.push(reefCounter);
 	}
@@ -339,10 +342,12 @@ var G = ( function () {
 
 		//Unicode characters for numbers start at 48.
 		PS.glyph(squareX, squareY, 48 + board.reefData[(squareY * GRIDX) + squareX]);
+
 		//console.log(board.reefData[(squareY * GRIDX) + squareX])
 
 		if(PS.glyph(squareX, squareY) == 48)
 		{
+
 			if(checkUp && checkLeft)
 			{
 				checkSquare(squareX - 1, squareY - 1);
@@ -382,6 +387,25 @@ var G = ( function () {
 			{
 				checkSquare(squareX + 1, squareY + 1);
 			}
+			if(board.reefData[squareY*GRIDX+squareX] == 3)
+			{
+				PS.color(squareX,squareY,0x8cb7ff);
+			}
+			else if(board.reefData[squareY*GRIDX+squareX] == 2)
+			{
+				PS.color(squareX,squareY,0x71a1f1);
+			}
+			else if(board.reefData[squareY*GRIDX+squareX] == 1)
+			{
+				PS.color(squareX,squareY,0x6597e9);
+			}
+			else
+			{
+				PS.color(squareX,squareY,0x4B81DC);
+			}
+
+
+
 		}
 	};
 
