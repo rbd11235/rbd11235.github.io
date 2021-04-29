@@ -63,8 +63,8 @@ var G = ( function () {
 
 	//Color of the water and borders represented as RGB Triplets
 
-	const GROUND_COLOR = [0,100,0];
-	const WALL_COLOR = [100,100,100];
+	const GROUND_COLOR = [220,120,120];
+	const WALL_COLOR = [130,30,30];
 	const TREASURE_COLOR = [255, 255, 0];
 	const PERSON_COLOR = [0, 255, 255];
 	const PLAYER_COLOR = [255, 0, 0];
@@ -91,11 +91,11 @@ var G = ( function () {
 
 			// Report imageData in debugger
 
-			PS.debug( "Loaded " + imageData.source +
+			/*PS.debug( "Loaded " + imageData.source +
 				":\nid = " + imageData.id +
 				"\nwidth = " + imageData.width +
 				"\nheight = " + imageData.height +
-				"\nformat = " + imageData.pixelSize + "\n" );
+				"\nformat = " + imageData.pixelSize + "\n" );*/
 
 			// Extract colors from imageData and
 			// assign them to the beads
@@ -131,16 +131,22 @@ var G = ( function () {
 			board.levels[mazeY][mazeX] = room;
 			if(imageData.source == "GameLevels/MainHall.bmp")
 			{
-				drawMap(1, 1);
+				drawMap(1, 1, true);
+				player.gameOver = false;
 			}
-			player.gameOver = false;
+
 		};
 
 		PS.imageLoad( imageFile, mapLoader, 1 );
 	}
 
-	function drawMap(mazeX, mazeY)
+	function drawMap(mazeX, mazeY, firstDraw)
 	{
+		if(!firstDraw)
+		{
+			PS.statusText("The pyramid is collapsing");
+		}
+
 		let room = board.levels[mazeY][mazeX];
 		for(var y=0; y<GRIDY; y++)
 		{
@@ -170,6 +176,8 @@ var G = ( function () {
 
 			}
 		}
+
+
 	}
 
 
@@ -194,7 +202,7 @@ var G = ( function () {
 	var exports = {
 		init: function( system, options ) {
 
-			PS.statusText("Team Swift")
+			PS.statusText("The pyramid is collapsing");
 			//Adds 2 rows to the bottom for the user interface.
 			PS.gridSize( GRIDX, GRIDY);
 			board.width = GRIDX;
@@ -233,10 +241,15 @@ var G = ( function () {
 
 			PS.spriteSolidColor( player.spriteId, PLAYER_COLOR);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
-			loadMap(1, 1, "GameLevels/MainHall.bmp");
-			loadMap(0, 1, "GameLevels/B1.bmp");
+
+
+			loadMap(0, 0, "GameLevels/A1.bmp");
 			loadMap(1, 0, "GameLevels/A2.bmp");
+			loadMap(2, 0, "GameLevels/A3.bmp");
+			loadMap(0, 1, "GameLevels/B1.bmp");
+			loadMap(1, 1, "GameLevels/MainHall.bmp");
 			loadMap(2, 1, "GameLevels/B3.bmp");
+
 
 			//drawMap(1, 1);
 			updatePosition();
@@ -259,7 +272,7 @@ var G = ( function () {
 				}
 				PS.dbEvent( TEAM, "startup", user );
 				PS.dbSend( TEAM, PS.CURRENT, { discard : true } );
-			}, { active : false } );
+			}, { active : true } );
 
 		},
 
@@ -384,17 +397,21 @@ var G = ( function () {
 
 			//If up or W
 			//The reset of these methods behave similarly
+			var val;
 			if(!player.gameOver)
 			{
 				if(key === 1006 || key === 119)
 				{
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
-						let val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
+						val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
+
 						if(val != 0)
 						{
 							player.y = player.y - 1;
 						}
+
+
 						//PS.audioPlay("Moving", {path:"./"});
 					}
 					else
@@ -409,7 +426,7 @@ var G = ( function () {
 				else if(key === 1005 || key === 97)
 				{
 					if(player.x > 0) {
-						let val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
+						val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
 						if(val != 0) {
 							player.x = player.x - 1;
 						}
@@ -427,7 +444,7 @@ var G = ( function () {
 				{
 					if(player.x < (GRIDX - 1))
 					{
-						let val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
+						val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
 						if(val != 0)
 						{
 							player.x = player.x + 1;
@@ -449,7 +466,7 @@ var G = ( function () {
 				{
 					if(player.y < (GRIDY - 1))
 					{
-						let val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
+						val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
 						if(val != 0)
 						{
 							player.y = player.y + 1;
@@ -464,6 +481,30 @@ var G = ( function () {
 					}
 
 				}
+
+				if(val == 2)
+				{
+					player.people += 1;
+					PS.statusText("I've found one of my co-workers");
+					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
+					PS.color(player.x, player.y, GROUND_COLOR);
+				}
+
+				if(val == 3)
+				{
+					player.treasure += 1;
+					PS.statusText("I've found an ancient artifact");
+					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
+					PS.color(player.x, player.y, GROUND_COLOR);
+				}
+
+				if(val == 4)
+				{
+					player.gameOver = true;
+					PS.statusText(player.people + " saved and " + player.treasure + " found. I made the right choice.")
+					PS.color(PS.ALL, PS.ALL, )
+				}
+
 
 				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 				updatePosition();
