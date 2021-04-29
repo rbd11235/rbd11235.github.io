@@ -21,7 +21,13 @@ Any value returned is ignored.
 [system : Object] = A JavaScript object containing engine and host platform information properties; see API documentation for details.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
+var board = {
 
+	width : 0,
+	height : 0,
+	pixelSize : 1,
+	levels: [],
+};
 
 var G = ( function () {
 	//Contains information about the player
@@ -31,12 +37,15 @@ var G = ( function () {
 		y: 0,
 		mazeX: 0,
 		mazeY: 0,
-		gameOver: false,
+		treasure: 0,
+		people: 0,
+		gameOver: true,
 		//Indicates the sprite id of the box to the
 		// left, right, top, or bottom of the player
 		//An empty string means there is no box in that position.
 
 	}
+
 	//Size of the grid, excluding the user interface.
 	//UI will adjust to different grid sizes, but it shouldn't be made smaller than 4x4
 	const GRIDX = 16
@@ -46,22 +55,18 @@ var G = ( function () {
 	const MAZEY = 2
 
 	const COLOR_RED = 0xFF0000;
-	const COLOR_BLUE = 0x0000FF;
+	const COLOR_BLUE = 0x00FFFF;
 	const COLOR_GREEN = 0x00FF00;
 	const COLOR_YELLOW = 0xFFFF00;
 	const COLOR_BLACK = 0x000000;
-	var board = {
 
-		width : 0,
-		height : 0,
-		pixelSize : 1,
-		levels: [],
-	};
 
 	//Color of the water and borders represented as RGB Triplets
 
-	const GROUND_COLOR = (0x4B81DC);
-	const WALL_COLOR = [255,220,122];
+	const GROUND_COLOR = [0,100,0];
+	const WALL_COLOR = [100,100,100];
+	const TREASURE_COLOR = [255, 255, 0];
+	const PERSON_COLOR = [0, 255, 255];
 	const PLAYER_COLOR = [255, 0, 0];
 
 	//Updates the position of the player on the grid based on the values of the player object
@@ -86,12 +91,12 @@ var G = ( function () {
 
 			// Report imageData in debugger
 
-			/*PS.debug( "Loaded " + imageData.source +
+			PS.debug( "Loaded " + imageData.source +
 				":\nid = " + imageData.id +
 				"\nwidth = " + imageData.width +
 				"\nheight = " + imageData.height +
 				"\nformat = " + imageData.pixelSize + "\n" );
-*/
+
 			// Extract colors from imageData and
 			// assign them to the beads
 			let room = [];
@@ -116,11 +121,19 @@ var G = ( function () {
 						case COLOR_RED:
 							room.push(4);
 							break;
+						default:
+							room.push(0);
+							break;
 					}
 					ptr += 1; // point to next value
 				}
 			}
 			board.levels[mazeY][mazeX] = room;
+			if(imageData.source == "GameLevels/MainHall.bmp")
+			{
+				drawMap(1, 1);
+			}
+			player.gameOver = false;
 		};
 
 		PS.imageLoad( imageFile, mapLoader, 1 );
@@ -133,6 +146,27 @@ var G = ( function () {
 		{
 			for(var x=0; x<GRIDX; x++)
 			{
+				let square = room[y * GRIDX + x]
+				switch(square)
+				{
+					case 0:
+						PS.color(x, y, WALL_COLOR)
+						break;
+					case 1:
+						PS.color(x, y, GROUND_COLOR)
+						break;
+					case 2:
+						PS.color(x, y, PERSON_COLOR)
+						break;
+					case 3:
+						PS.color(x, y, TREASURE_COLOR)
+						break;
+					case 4:
+						PS.color(x, y, GROUND_COLOR)
+						break;
+					default:
+						PS.color(x, y, WALL_COLOR)
+				}
 
 			}
 		}
@@ -142,20 +176,11 @@ var G = ( function () {
 	function checkSquare(squareX, squareY)
 	{
 
-		switch(getValue(squareX, squareY))
-		{
-			case 0:
-				break;
-			case 1:
-				break;
-			case 2:
-				break;
-		}
 	};
 
-	function getValue(squareX, squareY)
+	function getValue(mazeX, mazeY, squareX, squareY)
 	{
-		let value = board.data[(squareY * GRIDX) + squareX];
+		let value = board.levels[mazeY][mazeX][squareY * GRIDX + squareX];
 		return value;
 	};
 
@@ -209,7 +234,11 @@ var G = ( function () {
 			PS.spriteSolidColor( player.spriteId, PLAYER_COLOR);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
 			loadMap(1, 1, "GameLevels/MainHall.bmp");
+			loadMap(0, 1, "GameLevels/B1.bmp");
+			loadMap(1, 0, "GameLevels/A2.bmp");
+			loadMap(2, 1, "GameLevels/B3.bmp");
 
+			//drawMap(1, 1);
 			updatePosition();
 
 			// PS.dbLogin() must be called at the END
@@ -361,8 +390,18 @@ var G = ( function () {
 				{
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
-						player.y = player.y - 1;
+						let val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
+						if(val != 0)
+						{
+							player.y = player.y - 1;
+						}
 						//PS.audioPlay("Moving", {path:"./"});
+					}
+					else
+					{
+						player.mazeY -= 1;
+						drawMap(player.mazeX, player.mazeY);
+						player.y = GRIDY - 1;
 					}
 				}
 
@@ -370,8 +409,17 @@ var G = ( function () {
 				else if(key === 1005 || key === 97)
 				{
 					if(player.x > 0) {
-						player.x = player.x - 1;
+						let val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
+						if(val != 0) {
+							player.x = player.x - 1;
+						}
 						//PS.audioPlay("Moving", {path:"./"});
+					}
+					else
+					{
+						player.mazeX -= 1;
+						drawMap(player.mazeX, player.mazeY);
+						player.x = GRIDX - 1;
 					}
 				}
 				//If right or D
@@ -379,9 +427,21 @@ var G = ( function () {
 				{
 					if(player.x < (GRIDX - 1))
 					{
-						player.x = player.x + 1;
+						let val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
+						if(val != 0)
+						{
+							player.x = player.x + 1;
+						}
+
 						//PS.audioPlay("Moving", {path:"./"});
 					}
+					else
+					{
+						player.mazeX += 1;
+						drawMap(player.mazeX, player.mazeY);
+						player.x = 0;
+					}
+
 
 				}
 				//If down or S
@@ -389,8 +449,18 @@ var G = ( function () {
 				{
 					if(player.y < (GRIDY - 1))
 					{
-						player.y = player.y + 1;
+						let val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
+						if(val != 0)
+						{
+							player.y = player.y + 1;
+						}
 						//PS.audioPlay("Moving", {path:"./"});
+					}
+					else
+					{
+						player.mazeY += 1;
+						drawMap(player.mazeX, player.mazeY);
+						player.y = 0;
 					}
 
 				}
