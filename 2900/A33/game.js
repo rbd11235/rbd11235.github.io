@@ -1,3 +1,4 @@
+
 /*
 game.js for Perlenspiel 3.3.x
 Last revision: 2021-03-24 (BM)
@@ -28,6 +29,8 @@ var G = ( function () {
 		spriteId: "",
 		x: 0,
 		y: 0,
+		mazeX: 0,
+		mazeY: 0,
 		gameOver: false,
 		//Indicates the sprite id of the box to the
 		// left, right, top, or bottom of the player
@@ -36,105 +39,105 @@ var G = ( function () {
 	}
 	//Size of the grid, excluding the user interface.
 	//UI will adjust to different grid sizes, but it shouldn't be made smaller than 4x4
-	const GRIDX = 15
-	const GRIDY = 15
+	const GRIDX = 16
+	const GRIDY = 16
 
+	const MAZEX = 3
+	const MAZEY = 2
+
+	const COLOR_RED = 0xFF0000;
+	const COLOR_BLUE = 0x0000FF;
+	const COLOR_GREEN = 0x00FF00;
+	const COLOR_YELLOW = 0xFFFF00;
+	const COLOR_BLACK = 0x000000;
 	var board = {
 
 		width : 0,
 		height : 0,
 		pixelSize : 1,
-		data: [],
-		treasureX: 0,
-		treasureY: 0
+		levels: [],
 	};
 
-	//Color of the dirt and grass represented as RGB Triplets
-	const WATER_COLOR = PS.COLOR_BLUE;
-	const UI_BORDER = [158, 127, 41]
-	const UI_COLOR = [255,220,122];
-	// Here a counter is formed to measure the amount of times a
-	// particular bead has been touched by the player block.
+	//Color of the water and borders represented as RGB Triplets
 
-	//These functions are called when the UI buttons are clicked.
-	//Acts as if they pressed one of arrow keys
-	var clickedLeft = function( x, y, data ) {
-		PS.keyDown(1005, false, false, null)
-	};
-
-	var clickedRight = function( x, y, data ) {
-		PS.keyDown(1007, false, false, null)
-	};
-
-	var clickedUp = function( x, y, data ) {
-		PS.keyDown(1006, false, false, null)
-	};
-
-	var clickedDown = function( x, y, data ) {
-		PS.keyDown(1008, false, false, null)
-	};
+	const GROUND_COLOR = (0x4B81DC);
+	const WALL_COLOR = [255,220,122];
+	const PLAYER_COLOR = [255, 0, 0];
 
 	//Updates the position of the player on the grid based on the values of the player object
 	function updatePosition()
 	{
-		// Set plane to 1 (above floor)
-
 		PS.spritePlane( player.spriteId, 1 );
-
-		// Position sprite at center of grid
-
 		PS.spriteMove( player.spriteId, player.x, player.y );
-
-		checkSquare(player.x, player.y);
-
 	};
 
-	//Generates a random setup.
-	function generateBoard()
+
+
+	function loadMap(mazeX, mazeY, imageFile)
 	{
-		board.data = [];
-		for(var y=0; y < GRIDY; y++)
-		{
-			//PS.color(PS.ALL, y, WATER_COLOR)
-		}
-		for(var x=0; x < GRIDX; x++)
-		{
-			for(var y=0; y < GRIDY; y++)
-			{
-				//Lower the value of the number here to increase the amount of reefs.
-				let a = Math.floor(Math.random() * 4);
-				if(a === 0)
-				{
-					board.data.push(0);
-					//PS.color(x, y, PS.COLOR_ORANGE);
-				}
-				else
-				{
-					board.data.push(1);
+		var mapLoader;
+
+		// Image loading function
+		// Called when image loads successfully
+		// [data] parameter will contain imageData
+
+		mapLoader = function ( imageData ) {
+			var x, y, ptr, color;
+
+			// Report imageData in debugger
+
+			/*PS.debug( "Loaded " + imageData.source +
+				":\nid = " + imageData.id +
+				"\nwidth = " + imageData.width +
+				"\nheight = " + imageData.height +
+				"\nformat = " + imageData.pixelSize + "\n" );
+*/
+			// Extract colors from imageData and
+			// assign them to the beads
+			let room = [];
+			ptr = 0; // init pointer into data array
+			for ( y = 0; y < GRIDY; y += 1 ) {
+				for ( x = 0; x < GRIDX; x += 1 ) {
+					color = imageData.data[ ptr ]; // get color
+					switch(color)
+					{
+						case COLOR_BLUE:
+							room.push(2);
+							break;
+						case COLOR_GREEN:
+							room.push(1);
+							break;
+						case COLOR_YELLOW:
+							room.push(3);
+							break;
+						case COLOR_BLACK:
+							room.push(0);
+							break;
+						case COLOR_RED:
+							room.push(4);
+							break;
+					}
+					ptr += 1; // point to next value
 				}
 			}
-		}
+			board.levels[mazeY][mazeX] = room;
+		};
 
-		//Don't place a bomb on the starting position.
-		board.data[(player.x * GRIDX) + player.y] = 1;
-		PS.color(player.x, player.y, PS.COLOR_BLUE);
-		var valid = false;
-		while(valid == false)
+		PS.imageLoad( imageFile, mapLoader, 1 );
+	}
+
+	function drawMap(mazeX, mazeY)
+	{
+		let room = board.levels[mazeY][mazeX];
+		for(var y=0; y<GRIDY; y++)
 		{
-			let goalX = Math.floor(Math.random() * GRIDX);
-			let goalY = Math.floor(Math.random() * GRIDY);
-			//Don't place the goal on the player
-			if(!(goalX == player.x && goalY == player.y))
+			for(var x=0; x<GRIDX; x++)
 			{
-				valid = true;
-				board.data[(goalX * GRIDX) + goalY] = 2;
-				//PS.color(goalX, goalY, PS.COLOR_YELLOW);
-				board.treasureX = goalX;
-				board.treasureY = goalY;
+
 			}
 		}
+	}
 
-	};
 
 	function checkSquare(squareX, squareY)
 	{
@@ -142,108 +145,18 @@ var G = ( function () {
 		switch(getValue(squareX, squareY))
 		{
 			case 0:
-				player.gameOver = true;
-				PS.statusText("Your Ship Has Sunk");
 				break;
 			case 1:
-				addReefValue(squareX, squareY)
 				break;
 			case 2:
-				player.gameOver = true;
-				PS.statusText("You Found the Treasure!");
 				break;
 		}
 	};
 
 	function getValue(squareX, squareY)
 	{
-		let value = board.data[(squareX * GRIDX) + squareY];
+		let value = board.data[(squareY * GRIDX) + squareX];
 		return value;
-	};
-
-
-	function addReefValue(squareX, squareY)
-	{
-		var reefCounter = 0;
-		let checkUp = squareY > 0;
-		let checkRight = squareX < (GRIDX - 1);
-		let checkLeft = squareX > 0;
-		let checkDown = squareY < (GRIDY - 1);
-
-		if(checkUp && checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkUp)
-		{
-			let v = getValue(squareX, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkUp && checkRight)
-		{
-			let v = getValue(squareX + 1, squareY - 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkRight)
-		{
-			let v = getValue(squareX + 1, squareY);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown && checkLeft)
-		{
-			let v = getValue(squareX - 1, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown)
-		{
-			let v = getValue(squareX, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		if(checkDown && checkRight)
-		{
-			let v = getValue(squareX + 1, squareY + 1);
-			if(v === 0)
-			{
-				reefCounter += 1;
-			}
-		}
-
-		//Unicode characters for numbers start at 48.
-		PS.glyph(squareX, squareY, 48 + reefCounter);
 	};
 
 	//Creates the user interface and hooks up the buttons to the click methods
@@ -251,121 +164,52 @@ var G = ( function () {
 	function addUI()
 	{
 
-		//For the border separating the game and the user interface
-		for(var x=0; x < GRIDX; x++)
-		{
-			let width = {
-				top : 5,
-				left : 0,
-				bottom : 0,
-				right : 0
-			};
-			PS.border(x, GRIDY, width);
-			PS.borderColor(x, GRIDY, UI_BORDER)
-		}
-
-		for(var x=0; x < GRIDX; x++)
-		{
-			for(var y=0; y < GRIDY; y++)
-			{
-				board.data.push(0)
-			}
-		}
-
-		PS.color(PS.ALL, GRIDY, UI_COLOR)
-		PS.color(PS.ALL, GRIDY + 1, UI_COLOR)
-
-		let upX = GRIDX/2;
-		let upY = GRIDY;
-		let downX = GRIDX/2;
-		let downY = GRIDY + 1;
-		let leftX = (GRIDX/2) - 1;
-		let leftY = GRIDY + 1;
-		let rightX = (GRIDX/2) + 1;
-		let rightY = GRIDY + 1;
-
-
-		let widthUp = {
-			top : 5,
-			left : 5,
-			bottom : 0,
-			right : 5
-		}
-
-		let widthLeft = {
-			top : 5,
-			left : 5,
-			bottom : 5,
-			right : 0
-		}
-
-		let widthRight = {
-			top : 5,
-			left : 0,
-			bottom : 5,
-			right : 5
-		}
-		PS.glyph(upX, upY, "^");
-		PS.glyph(downX, downY, "v");
-		PS.glyph(leftX, leftY, "<");
-		PS.glyph(rightX, rightY, ">");
-
-		PS.border(upX, upY, widthUp);
-		PS.border(downX, downY, 5);
-		PS.border(leftX, leftY, widthLeft);
-		PS.border(rightX, rightY, widthRight);
-
-		PS.borderColor(upX, upY, UI_BORDER);
-		PS.borderColor(downX, downY, UI_BORDER);
-		PS.borderColor(leftX, leftY, UI_BORDER);
-		PS.borderColor(rightX, rightY, UI_BORDER);
-
-		PS.exec(upX, upY, clickedUp)
-		PS.exec(downX, downY, clickedDown)
-		PS.exec(leftX, leftY, clickedLeft)
-		PS.exec(rightX, rightY, clickedRight)
 	};
+
 	var exports = {
 		init: function( system, options ) {
+
 			PS.statusText("Team Swift")
 			//Adds 2 rows to the bottom for the user interface.
-			PS.gridSize( GRIDX, GRIDY + 2 );
+			PS.gridSize( GRIDX, GRIDY);
 			board.width = GRIDX;
 			board.height = GRIDY;
-
 
 			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
-					PS.color(a,b,WATER_COLOR)
+					PS.color(a,b,GROUND_COLOR)
+					//PS.fade(a, b, 1);
 				}
 			}
-			PS.gridColor(WATER_COLOR)
+
+			//Initialize a multidimensional array.
+			for( var y=0; y<MAZEY; y++) {
+				let a = [];
+				board.levels.push(a);
+				for( var x=0; x<MAZEX; x++) {
+					let b = [];
+					board.levels[y].push(b);
+				}
+			}
+			//PS.gridColor(WATER_COLOR)
 			PS.border(PS.ALL, PS.ALL, 0)
 
-			addUI();
+
 			// Change this string to your team name
 			// Use only ALPHABETIC characters
 			// No numbers, spaces or punctuation!
 			player.spriteId = PS.spriteSolid( 1, 1 );
-
+			player.x = Math.floor(GRIDX/2);
+			player.y = Math.floor(GRIDY/2);
+			player.mazeX = 1;
+			player.mazeY = 1;
 			// Set color to red
 
-			PS.spriteSolidColor( player.spriteId, PS.COLOR_RED);
+			PS.spriteSolidColor( player.spriteId, PLAYER_COLOR);
 			//PS.spriteCollide(player.spriteId, collisionFunc)
-			var valid = false;
-			while(!valid)
-			{
-				generateBoard();
-				let map = PS.pathMap(board);
-				let path = PS.pathFind(map, player.x, player.y, board.treasureX, board.treasureY);
-				if(path.length != 0)
-				{
-					valid = true;
-				}
-			}
+			loadMap(1, 1, "GameLevels/MainHall.bmp");
 
-			//Spawns the player
 			updatePosition();
 
 			// PS.dbLogin() must be called at the END
@@ -401,6 +245,7 @@ var G = ( function () {
 		*/
 
 		touch: function( x, y, data, options ) {
+
 			// Uncomment the following code line
 			// to inspect x/y parameters:
 
@@ -516,7 +361,8 @@ var G = ( function () {
 				{
 					//If they're not trying to move offscreen
 					if(player.y > 0) {
-						player.y = player.y - 1
+						player.y = player.y - 1;
+						//PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 
@@ -525,6 +371,7 @@ var G = ( function () {
 				{
 					if(player.x > 0) {
 						player.x = player.x - 1;
+						//PS.audioPlay("Moving", {path:"./"});
 					}
 				}
 				//If right or D
@@ -533,6 +380,7 @@ var G = ( function () {
 					if(player.x < (GRIDX - 1))
 					{
 						player.x = player.x + 1;
+						//PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
@@ -542,12 +390,15 @@ var G = ( function () {
 					if(player.y < (GRIDY - 1))
 					{
 						player.y = player.y + 1;
+						//PS.audioPlay("Moving", {path:"./"});
 					}
 
 				}
+
 				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 				updatePosition();
 			}
+
 
 
 
