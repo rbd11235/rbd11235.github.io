@@ -31,15 +31,18 @@ var board = {
 
 var G = ( function () {
 	//Contains information about the player
+	const GAME_TIME = 40;
 	var player = {
 		spriteId: "",
 		x: 0,
 		y: 0,
 		mazeX: 0,
 		mazeY: 0,
-		time: 30,
-		timer: "",
+		time: GAME_TIME,
+		gameTimer: "",
+		messageTimer: "",
 		message: "",
+		messageQueue: [],
 		treasure: 0,
 		people: 0,
 		gameOver: true,
@@ -48,6 +51,22 @@ var G = ( function () {
 		//An empty string means there is no box in that position.
 
 	}
+
+	//Structure to keep track of keyboard presses
+	var keyboard = {
+		W: false,
+		A: false,
+		S: false,
+		D: false,
+		Up: false,
+		Left: false,
+		Down: false,
+		Right: false,
+		WASD: false,
+		Space: false
+	}
+
+	var controlType = 0;
 
 
 
@@ -85,7 +104,63 @@ var G = ( function () {
 
 	function resetGame()
 	{
+		PS.spriteDelete(player.spriteId)
+		player.message = "The pyramid is collapsing"
+		player.messageQueue = [];
+		player.time = GAME_TIME;
+		player.mazeX = 1;
+		player.mazeY = 1;
+		player.people = 0;
+		player.treasure = 0;
+		displayPlayerMessage();
+		PS.gridSize( GRIDX, GRIDY);
+		board.width = GRIDX;
+		board.height = GRIDY;
 
+		for (var a=0; a<GRIDX; a++)  {
+			for (var b=0; b<GRIDY; b++)  {
+				PS.color(a,b,GROUND_COLOR)
+				//PS.fade(a, b, 1);
+			}
+		}
+
+		//Initialize a multidimensional array.
+		for( var y=0; y<MAZEY; y++) {
+			let a = [];
+			board.levels.push(a);
+			for( var x=0; x<MAZEX; x++) {
+				let b = [];
+				board.levels[y].push(b);
+			}
+		}
+		//PS.gridColor(WATER_COLOR)
+		PS.border(PS.ALL, PS.ALL, 0)
+
+
+		// Change this string to your team name
+		// Use only ALPHABETIC characters
+		// No numbers, spaces or punctuation!
+		player.spriteId = PS.spriteSolid( 1, 1 );
+		player.x = Math.floor(GRIDX/2);
+		player.y = Math.floor(GRIDY/2);
+		player.mazeX = 1;
+		player.mazeY = 1;
+		// Set color to red
+
+		PS.spriteSolidColor( player.spriteId, PLAYER_COLOR);
+		//PS.spriteCollide(player.spriteId, collisionFunc)
+
+
+		loadMap(0, 0, "GameLevels/A1.bmp");
+		loadMap(1, 0, "GameLevels/A2.bmp");
+		loadMap(2, 0, "GameLevels/A3.bmp");
+		loadMap(0, 1, "GameLevels/B1.bmp");
+		loadMap(1, 1, "GameLevels/MainHall.bmp");
+		loadMap(2, 1, "GameLevels/B3.bmp");
+
+
+		//drawMap(1, 1);
+		updatePosition();
 	}
 
 	function loadMap(mazeX, mazeY, imageFile)
@@ -142,11 +217,12 @@ var G = ( function () {
 				}
 			}
 			board.levels[mazeY][mazeX] = room;
+
 			if(imageData.source == "GameLevels/MainHall.bmp")
 			{
 				drawMap(1, 1, true);
 				player.gameOver = false;
-				player.timer = PS.timerStart(60, timerTick)
+				player.gameTimer = PS.timerStart(60, timerTick)
 			}
 
 		};
@@ -163,9 +239,9 @@ var G = ( function () {
 		}
 		else
 		{
-			PS.timerStop(player.timer);
+			PS.timerStop(player.gameTimer);
 			player.gameOver = true;
-			PS.statusText("I've failed")
+			PS.statusText("I've failed. (Space to retry)")
 			playEndScreen(false)
 		}
 
@@ -187,15 +263,26 @@ var G = ( function () {
 			let timeString = minutes.toString() + ":" + seconds.toString();
 			return timeString;
 		}
-
-
-		return timeString;
 	}
 
 	function displayMultiMessage(messageArray)
 	{
-
+		player.messageQueue = messageArray;
+		PS.statusText(player.messageQueue.shift())
+		player.messageTimer = PS.timerStart(300, messageTick)
 	}
+
+	var messageTick = function()
+	{
+		if(player.messageQueue.length > 0)
+		{
+			PS.statusText(player.messageQueue.shift())
+		}
+		else
+		{
+			PS.timerStop(player.messageTimer)
+		}
+	};
 
 	function playEndScreen(winLose)
 	{
@@ -266,24 +353,17 @@ var G = ( function () {
 		return value;
 	};
 
-	//Creates the user interface and hooks up the buttons to the click methods
-	//Will center the UI horizontally based on the grid size
-	function addUI()
-	{
 
-	};
 
 	var exports = {
 		init: function( system, options ) {
 
 			player.message = "The pyramid is collapsing"
 			displayPlayerMessage();
-			//Adds 2 rows to the bottom for the user interface.
 			PS.gridSize( GRIDX, GRIDY);
 			board.width = GRIDX;
 			board.height = GRIDY;
 
-			//Here the grid and backgrounds are set to green
 			for (var a=0; a<GRIDX; a++)  {
 				for (var b=0; b<GRIDY; b++)  {
 					PS.color(a,b,GROUND_COLOR)
@@ -475,94 +555,204 @@ var G = ( function () {
 			var val = -1;
 			if(!player.gameOver)
 			{
-				if(key === 1006 || key === 119)
-				{
-					//If they're not trying to move offscreen
-					if(player.y > 0) {
-						val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
 
-						if(val != 0)
+				switch(key)
+				{
+					case 1006:
+						keyboard.Up = true;
+						if(!(keyboard.A || keyboard.D || keyboard.W || keyboard.S))
 						{
-							player.y = player.y - 1;
+							//If they're not trying to move offscreen
+							if(player.y > 0) {
+								val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
+
+								if(val != 0 )
+								{
+									player.y = player.y - 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeY -= 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.y = GRIDY - 1;
+							}
 						}
-
-
-						//PS.audioPlay("Moving", {path:"./"});
-					}
-					else
-					{
-						player.mazeY -= 1;
-						drawMap(player.mazeX, player.mazeY);
-						player.y = GRIDY - 1;
-					}
-				}
-
-				//If left or A
-				else if(key === 1005 || key === 97)
-				{
-					if(player.x > 0) {
-						val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
-						if(val != 0) {
-							player.x = player.x - 1;
-						}
-						//PS.audioPlay("Moving", {path:"./"});
-					}
-					else
-					{
-						player.mazeX -= 1;
-						drawMap(player.mazeX, player.mazeY);
-						player.x = GRIDX - 1;
-					}
-				}
-				//If right or D
-				else if(key === 1007 || key === 100)
-				{
-					if(player.x < (GRIDX - 1))
-					{
-						val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
-						if(val != 0)
+						break;
+					case 119:
+						keyboard.W = true;
+						if(!(keyboard.Up || keyboard.Right || keyboard.Left || keyboard.Down))
 						{
-							player.x = player.x + 1;
+							//If they're not trying to move offscreen
+							if(player.y > 0) {
+								val = getValue(player.mazeX, player.mazeY, player.x, player.y - 1)
+
+								if(val != 0 )
+								{
+									player.y = player.y - 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeY -= 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.y = GRIDY - 1;
+							}
 						}
-
-						//PS.audioPlay("Moving", {path:"./"});
-					}
-					else
-					{
-						player.mazeX += 1;
-						drawMap(player.mazeX, player.mazeY);
-						player.x = 0;
-					}
-
-
-				}
-				//If down or S
-				else if(key === 1008 || key === 115)
-				{
-					if(player.y < (GRIDY - 1))
-					{
-						val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
-						if(val != 0)
+						break;
+					case 1005:
+						keyboard.Left = true;
+						if(!(keyboard.A || keyboard.D || keyboard.W || keyboard.S))
 						{
-							player.y = player.y + 1;
+							if(player.x > 0) {
+								val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
+								if(val != 0) {
+									player.x = player.x - 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeX -= 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.x = GRIDX - 1;
+							}
 						}
-						//PS.audioPlay("Moving", {path:"./"});
-					}
-					else
-					{
-						player.mazeY += 1;
-						drawMap(player.mazeX, player.mazeY);
-						player.y = 0;
-					}
+						break;
+					case 97:
+						keyboard.A = true;
+						if(!(keyboard.Up || keyboard.Right || keyboard.Left || keyboard.Down))
+						{
+							if(player.x > 0) {
+								val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
+								if(val != 0) {
+									player.x = player.x - 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeX -= 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.x = GRIDX - 1;
+							}
+						}
+						break;
+					case 1007:
+						keyboard.Right = true;
+						if(!(keyboard.A || keyboard.D || keyboard.W || keyboard.S))
+						{
+							if(player.x < (GRIDX - 1))
+							{
+								val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
+								if(val != 0)
+								{
+									player.x = player.x + 1;
+								}
+
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeX += 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.x = 0;
+							}
+						}
+						break;
+					case 100:
+						keyboard.D = true;
+						if(!(keyboard.Up || keyboard.Right || keyboard.Left || keyboard.Down))
+						{
+							if(player.x < (GRIDX - 1))
+							{
+								val = getValue(player.mazeX, player.mazeY,player.x + 1, player.y)
+								if(val != 0)
+								{
+									player.x = player.x + 1;
+								}
+
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeX += 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.x = 0;
+							}
+						}
+						break;
+					case 1008:
+						keyboard.Down = true;
+						if(!(keyboard.A || keyboard.D || keyboard.W || keyboard.S))
+						{
+							if(player.y < (GRIDY - 1))
+							{
+								val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
+								if(val != 0)
+								{
+									player.y = player.y + 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeY += 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.y = 0;
+							}
+						}
+						break;
+					case 115:
+						keyboard.S = true;
+						if(!(keyboard.Up || keyboard.Right || keyboard.Left || keyboard.Down))
+						{
+							if(player.y < (GRIDY - 1))
+							{
+								val = getValue(player.mazeX, player.mazeY, player.x, player.y + 1)
+								if(val != 0)
+								{
+									player.y = player.y + 1;
+								}
+								//PS.audioPlay("Moving", {path:"./"});
+							}
+							else
+							{
+								player.mazeY += 1;
+								drawMap(player.mazeX, player.mazeY);
+								player.y = 0;
+							}
+						}
+						break;
+					case 32:
+						if(!keyboard.Space)
+						{
+							player.gameOver = true;
+							PS.timerStop(player.gameTimer);
+							PS.statusText("It's over. I accept my fate. (Space to retry)")
+							playEndScreen(false)
+						}
+						keyboard.Space = true;
+						break;
+
 
 				}
-				else if(key === 32)
+
+
+
+
+			}
+			else
+			{
+				if(key === 32 && (!keyboard.Space))
 				{
-					player.gameOver = true;
-					PS.timerStop(player.timer);
-					PS.statusText("It's over. I accept my fate.")
-					playEndScreen(false)
+					resetGame();
 				}
+				keyboard.Space = true;
+			}
+
 
 				if(val == 2)
 				{
@@ -585,10 +775,12 @@ var G = ( function () {
 				if(val == 4)
 				{
 					player.gameOver = true;
-					PS.timerStop(player.timer);
+					PS.timerStop(player.gameTimer);
 					playEndScreen(true)
-					PS.statusText(player.people + " saved and " + player.treasure + " found. I made the right choice.")
-					PS.color(PS.ALL, PS.ALL, )
+					let messages = [];
+					messages.push(player.people + " saved and " + player.treasure + " found.")
+					messages.push("I made the right choice.")
+					displayMultiMessage(messages);
 				}
 
 				if(val == 5)
@@ -600,17 +792,6 @@ var G = ( function () {
 
 				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
 				updatePosition();
-			}
-			else
-			{
-				if(key === 32)
-				{
-					resetGame();
-				}
-			}
-
-
-
 
 		},
 		/*
@@ -629,6 +810,37 @@ var G = ( function () {
 			// PS.debug( "PS.keyUp(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 
 			// Add code here for when a key is released.
+			switch(key)
+			{
+				case 1006:
+					keyboard.Up = false;
+					break;
+				case 119:
+					keyboard.W = false;
+					break;
+				case 1005:
+					keyboard.Left = false;
+					break;
+				case 97:
+					keyboard.A = false;
+					break;
+				case 1007:
+					keyboard.Right = false
+					break;
+				case 100:
+					keyboard.D = false;
+					break;
+				case 1008:
+					keyboard.Down = false;
+					break;
+				case 115:
+					keyboard.S = false;
+					break;
+				case 32:
+					keyboard.Space = false;
+					break;
+			}
+
 		},
 
 		/*
