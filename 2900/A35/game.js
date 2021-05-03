@@ -42,6 +42,7 @@ var G = ( function () {
 		gameTimer: "",
 		messageTimer: "",
 		message: "",
+		backgroundChannel: "",
 		messageQueue: [],
 		treasure: 0,
 		people: 0,
@@ -104,6 +105,8 @@ var G = ( function () {
 
 	function resetGame()
 	{
+
+		PS.audioPlayChannel(player.backgroundChannel, {volume: 2});
 		PS.spriteDelete(player.spriteId)
 		player.message = "The pyramid is collapsing"
 		player.messageQueue = [];
@@ -230,6 +233,12 @@ var G = ( function () {
 		PS.imageLoad( imageFile, mapLoader, 1 );
 	}
 
+	var audioLoad = function (options)
+	{
+		player.backgroundChannel = options.channel;
+		PS.audioPlayChannel(player.backgroundChannel, {volume: 2});
+	}
+
 	var timerTick = function()
 	{
 		player.time -= 1;
@@ -242,6 +251,8 @@ var G = ( function () {
 			PS.timerStop(player.gameTimer);
 			player.gameOver = true;
 			PS.statusText("I've failed. (Space to retry)")
+			PS.audioStop(player.backgroundChannel);
+			PS.audioPlay("Collapse", {path:"./"});
 			playEndScreen(false)
 		}
 
@@ -357,7 +368,7 @@ var G = ( function () {
 
 	var exports = {
 		init: function( system, options ) {
-
+			PS.audioLoad("Background", {path:"./", onLoad: audioLoad, volume: 0.1});
 			player.message = "The pyramid is collapsing"
 			displayPlayerMessage();
 			PS.gridSize( GRIDX, GRIDY);
@@ -569,6 +580,7 @@ var G = ( function () {
 								if(val != 0 )
 								{
 									player.y = player.y - 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 								//PS.audioPlay("Moving", {path:"./"});
 							}
@@ -577,6 +589,7 @@ var G = ( function () {
 								player.mazeY -= 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.y = GRIDY - 1;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -591,6 +604,7 @@ var G = ( function () {
 								if(val != 0 )
 								{
 									player.y = player.y - 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 								//PS.audioPlay("Moving", {path:"./"});
 							}
@@ -599,6 +613,7 @@ var G = ( function () {
 								player.mazeY -= 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.y = GRIDY - 1;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -610,6 +625,7 @@ var G = ( function () {
 								val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
 								if(val != 0) {
 									player.x = player.x - 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 								//PS.audioPlay("Moving", {path:"./"});
 							}
@@ -618,6 +634,7 @@ var G = ( function () {
 								player.mazeX -= 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.x = GRIDX - 1;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -629,6 +646,7 @@ var G = ( function () {
 								val = getValue(player.mazeX, player.mazeY, player.x - 1, player.y)
 								if(val != 0) {
 									player.x = player.x - 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 								//PS.audioPlay("Moving", {path:"./"});
 							}
@@ -637,6 +655,7 @@ var G = ( function () {
 								player.mazeX -= 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.x = GRIDX - 1;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -650,6 +669,7 @@ var G = ( function () {
 								if(val != 0)
 								{
 									player.x = player.x + 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 
 								//PS.audioPlay("Moving", {path:"./"});
@@ -659,6 +679,7 @@ var G = ( function () {
 								player.mazeX += 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.x = 0;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -672,6 +693,7 @@ var G = ( function () {
 								if(val != 0)
 								{
 									player.x = player.x + 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
 
 								//PS.audioPlay("Moving", {path:"./"});
@@ -681,6 +703,7 @@ var G = ( function () {
 								player.mazeX += 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.x = 0;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -694,14 +717,16 @@ var G = ( function () {
 								if(val != 0)
 								{
 									player.y = player.y + 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
-								//PS.audioPlay("Moving", {path:"./"});
+
 							}
 							else
 							{
 								player.mazeY += 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.y = 0;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -715,14 +740,16 @@ var G = ( function () {
 								if(val != 0)
 								{
 									player.y = player.y + 1;
+									PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 								}
-								//PS.audioPlay("Moving", {path:"./"});
+
 							}
 							else
 							{
 								player.mazeY += 1;
 								drawMap(player.mazeX, player.mazeY);
 								player.y = 0;
+								PS.audioPlay("Footsteps", {path:"./", volume: 0.1});
 							}
 						}
 						break;
@@ -732,6 +759,9 @@ var G = ( function () {
 							player.gameOver = true;
 							PS.timerStop(player.gameTimer);
 							PS.statusText("It's over. I accept my fate. (Space to retry)")
+							PS.audioStop(player.backgroundChannel);
+							PS.audioPlay("Collapse", {path:"./"});
+
 							playEndScreen(false)
 						}
 						keyboard.Space = true;
@@ -757,6 +787,7 @@ var G = ( function () {
 				if(val == 2)
 				{
 					player.people += 1;
+					PS.audioPlay("Human_Collect", {path:"./"});
 					player.message = "I've found one of my co-workers"
 					displayPlayerMessage();
 					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
@@ -766,6 +797,7 @@ var G = ( function () {
 				if(val == 3)
 				{
 					player.treasure += 1;
+					PS.audioPlay("Artifact_Collect", {path:"./"});
 					player.message = "I've found an ancient artifact"
 					displayPlayerMessage();
 					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
