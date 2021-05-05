@@ -1,4 +1,3 @@
-
 /*
 game.js for Perlenspiel 3.3.x
 Last revision: 2021-03-24 (BM)
@@ -162,6 +161,7 @@ var G = ( function () {
 		loadMap(2, 1, "GameLevels/B3.bmp");
 
 
+
 		//drawMap(1, 1);
 		updatePosition();
 	}
@@ -180,10 +180,10 @@ var G = ( function () {
 			// Report imageData in debugger
 
 			/*PS.debug( "Loaded " + imageData.source +
-				":\nid = " + imageData.id +
-				"\nwidth = " + imageData.width +
-				"\nheight = " + imageData.height +
-				"\nformat = " + imageData.pixelSize + "\n" );*/
+                ":\nid = " + imageData.id +
+                "\nwidth = " + imageData.width +
+                "\nheight = " + imageData.height +
+                "\nformat = " + imageData.pixelSize + "\n" );*/
 
 			// Extract colors from imageData and
 			// assign them to the beads
@@ -250,9 +250,10 @@ var G = ( function () {
 		{
 			PS.timerStop(player.gameTimer);
 			player.gameOver = true;
-			PS.statusText("I've failed. (Space to retry)")
+			PS.statusText("I wasn't able to escape. (Space to retry)")
 			PS.audioStop(player.backgroundChannel);
 			PS.audioPlay("Collapse", {path:"./"});
+			PS.fade(PS.ALL, PS.ALL, 60)
 			playEndScreen(false)
 		}
 
@@ -299,12 +300,27 @@ var G = ( function () {
 	{
 		if(winLose == true)
 		{
+			if (player.people > player.treasure)
+			{
+				PS.imageLoad("peoplewin.bmp",loader);
 
+			}
+			else if (player.people < player.treasure)
+			{
+				PS.imageLoad("treasurewin.bmp",loader);
+			}
+			else if (player.people == player.treasure)
+			{
+				PS.imageLoad("overallwin.bmp",loader);
+			}
 		}
 		else
 		{
 			PS.color(PS.ALL, PS.ALL, PS.COLOR_BLACK)
 		}
+	}
+	function loader(image) {
+		PS.imageBlit(image, 0, 0)
 	}
 
 	function displayPlayerMessage()
@@ -443,14 +459,14 @@ var G = ( function () {
 		},
 
 		/*
-		PS.touch ( x, y, data, options )
-		Called when the left mouse button is clicked over bead(x, y), or when bead(x, y) is touched.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[x : Number] = zero-based x-position (column) of the bead on the grid.
-		[y : Number] = zero-based y-position (row) of the bead on the grid.
-		[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.touch ( x, y, data, options )
+        Called when the left mouse button is clicked over bead(x, y), or when bead(x, y) is touched.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [x : Number] = zero-based x-position (column) of the bead on the grid.
+        [y : Number] = zero-based y-position (row) of the bead on the grid.
+        [data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		touch: function( x, y, data, options ) {
 
@@ -473,14 +489,14 @@ var G = ( function () {
 		},
 
 		/*
-		PS.release ( x, y, data, options )
-		Called when the left mouse button is released, or when a touch is lifted, over bead(x, y).
-		This function doesn't have to do anything. Any value returned is ignored.
-		[x : Number] = zero-based x-position (column) of the bead on the grid.
-		[y : Number] = zero-based y-position (row) of the bead on the grid.
-		[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.release ( x, y, data, options )
+        Called when the left mouse button is released, or when a touch is lifted, over bead(x, y).
+        This function doesn't have to do anything. Any value returned is ignored.
+        [x : Number] = zero-based x-position (column) of the bead on the grid.
+        [y : Number] = zero-based y-position (row) of the bead on the grid.
+        [data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		release: function( x, y, data, options ) {
 			// Uncomment the following code line to inspect x/y parameters:
@@ -491,14 +507,14 @@ var G = ( function () {
 		},
 
 		/*
-		PS.enter ( x, y, button, data, options )
-		Called when the mouse cursor/touch enters bead(x, y).
-		This function doesn't have to do anything. Any value returned is ignored.
-		[x : Number] = zero-based x-position (column) of the bead on the grid.
-		[y : Number] = zero-based y-position (row) of the bead on the grid.
-		[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.enter ( x, y, button, data, options )
+        Called when the mouse cursor/touch enters bead(x, y).
+        This function doesn't have to do anything. Any value returned is ignored.
+        [x : Number] = zero-based x-position (column) of the bead on the grid.
+        [y : Number] = zero-based y-position (row) of the bead on the grid.
+        [data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		enter: function( x, y, data, options ) {
 			// Uncomment the following code line to inspect x/y parameters:
@@ -509,14 +525,14 @@ var G = ( function () {
 		},
 
 		/*
-		PS.exit ( x, y, data, options )
-		Called when the mouse cursor/touch exits bead(x, y).
-		This function doesn't have to do anything. Any value returned is ignored.
-		[x : Number] = zero-based x-position (column) of the bead on the grid.
-		[y : Number] = zero-based y-position (row) of the bead on the grid.
-		[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.exit ( x, y, data, options )
+        Called when the mouse cursor/touch exits bead(x, y).
+        This function doesn't have to do anything. Any value returned is ignored.
+        [x : Number] = zero-based x-position (column) of the bead on the grid.
+        [y : Number] = zero-based y-position (row) of the bead on the grid.
+        [data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		exit: function( x, y, data, options ) {
 			// Uncomment the following code line to inspect x/y parameters:
@@ -527,11 +543,11 @@ var G = ( function () {
 		},
 
 		/*
-		PS.exitGrid ( options )
-		Called when the mouse cursor/touch exits the grid perimeter.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.exitGrid ( options )
+        Called when the mouse cursor/touch exits the grid perimeter.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		exitGrid: function( options ) {
 			// Uncomment the following code line to verify operation:
@@ -542,14 +558,14 @@ var G = ( function () {
 		},
 
 		/*
-		PS.keyDown ( key, shift, ctrl, options )
-		Called when a key on the keyboard is pressed.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[key : Number] = ASCII code of the released key, or one of the PS.KEY_* constants documented in the API.
-		[shift : Boolean] = true if shift key is held down, else false.
-		[ctrl : Boolean] = true if control key is held down, else false.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.keyDown ( key, shift, ctrl, options )
+        Called when a key on the keyboard is pressed.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [key : Number] = ASCII code of the released key, or one of the PS.KEY_* constants documented in the API.
+        [shift : Boolean] = true if shift key is held down, else false.
+        [ctrl : Boolean] = true if control key is held down, else false.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		keyDown: function( key, shift, ctrl, options ) {
 			// Uncomment the following code line to inspect first three parameters:
@@ -784,57 +800,57 @@ var G = ( function () {
 			}
 
 
-				if(val == 2)
-				{
-					player.people += 1;
-					PS.audioPlay("Human_Collect", {path:"./"});
-					player.message = "I've found one of my co-workers"
-					displayPlayerMessage();
-					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
-					PS.color(player.x, player.y, GROUND_COLOR);
-				}
+			if(val == 2)
+			{
+				player.people += 1;
+				PS.audioPlay("Human_Collect", {path:"./"});
+				player.message = "I've found one of my teammates"
+				displayPlayerMessage();
+				board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
+				PS.color(player.x, player.y, GROUND_COLOR);
+			}
 
-				if(val == 3)
-				{
-					player.treasure += 1;
-					PS.audioPlay("Artifact_Collect", {path:"./"});
-					player.message = "I've found an ancient artifact"
-					displayPlayerMessage();
-					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
-					PS.color(player.x, player.y, GROUND_COLOR);
-				}
+			if(val == 3)
+			{
+				player.treasure += 1;
+				PS.audioPlay("Artifact_Collect", {path:"./"});
+				player.message = "I've found an ancient artifact"
+				displayPlayerMessage();
+				board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 1;
+				PS.color(player.x, player.y, GROUND_COLOR);
+			}
 
-				if(val == 4)
-				{
-					player.gameOver = true;
-					PS.timerStop(player.gameTimer);
-					playEndScreen(true)
-					let messages = [];
-					messages.push(player.people + " saved and " + player.treasure + " found.")
-					messages.push("I made the right choice.")
-					displayMultiMessage(messages);
-				}
+			if(val == 4)
+			{
+				player.gameOver = true;
+				PS.timerStop(player.gameTimer);
+				playEndScreen(true)
+				let messages = [];
+				messages.push(player.people + " saved and " + player.treasure + " found.")
+				messages.push("I've saved what was important.")
+				displayMultiMessage(messages);
+			}
 
-				if(val == 5)
-				{
-					board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 0;
-					PS.color(player.x, player.y, WALL_COLOR);
-				}
+			if(val == 5)
+			{
+				board.levels[player.mazeY][player.mazeX][player.y * GRIDX + player.x] = 0;
+				PS.color(player.x, player.y, WALL_COLOR);
+			}
 
 
-				//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
-				updatePosition();
+			//Move the player. Only here will collisions with new boxes trigger and properly update the player data.
+			updatePosition();
 
 		},
 		/*
-		PS.keyUp ( key, shift, ctrl, options )
-		Called when a key on the keyboard is released.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[key : Number] = ASCII code of the released key, or one of the PS.KEY_* constants documented in the API.
-		[shift : Boolean] = true if shift key is held down, else false.
-		[ctrl : Boolean] = true if control key is held down, else false.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		*/
+        PS.keyUp ( key, shift, ctrl, options )
+        Called when a key on the keyboard is released.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [key : Number] = ASCII code of the released key, or one of the PS.KEY_* constants documented in the API.
+        [shift : Boolean] = true if shift key is held down, else false.
+        [ctrl : Boolean] = true if control key is held down, else false.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        */
 
 		keyUp: function( key, shift, ctrl, options ) {
 			// Uncomment the following code line to inspect first three parameters:
@@ -876,13 +892,13 @@ var G = ( function () {
 		},
 
 		/*
-		PS.input ( sensors, options )
-		Called when a supported input device event (other than those above) is detected.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[sensors : Object] = A JavaScript object with properties indicating sensor status; see API documentation for details.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		NOTE: Currently, only mouse wheel events are reported, and only when the mouse cursor is positioned directly over the grid.
-		*/
+        PS.input ( sensors, options )
+        Called when a supported input device event (other than those above) is detected.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [sensors : Object] = A JavaScript object with properties indicating sensor status; see API documentation for details.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        NOTE: Currently, only mouse wheel events are reported, and only when the mouse cursor is positioned directly over the grid.
+        */
 
 		input: function( sensors, options ) {
 			// Uncomment the following code lines to inspect first parameter:
@@ -897,12 +913,12 @@ var G = ( function () {
 		},
 
 		/*
-		PS.shutdown ( options )
-		Called when the browser window running Perlenspiel is about to close.
-		This function doesn't have to do anything. Any value returned is ignored.
-		[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-		NOTE: This event is generally needed only by applications utilizing networked telemetry.
-		*/
+        PS.shutdown ( options )
+        Called when the browser window running Perlenspiel is about to close.
+        This function doesn't have to do anything. Any value returned is ignored.
+        [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
+        NOTE: This event is generally needed only by applications utilizing networked telemetry.
+        */
 
 		shutdown: function( options ) {
 			// Uncomment the following code line to verify operation:
